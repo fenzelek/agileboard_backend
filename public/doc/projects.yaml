@@ -1,0 +1,1101 @@
+swagger: '2.0'
+info:
+  title: Projects
+  description: This section allow you to manage projects in your company.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /projects:
+    get:
+      summary: Display list of projects
+      description: |
+        Display list of projects for selected company and logged user. Admin or owner can see projects of other users within company.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which projects will be listed
+          type: string
+          required: true
+        - name: search
+          in: query
+          description: Name of project. Partial match will be done if given
+          type: string
+          required: false
+        - name: status
+          in: query
+          description: Admin or owner can use this to filer results, `all` (default) to see all projects, `closed` to see only closed projects and `opened` to see only opened projects.
+          type: string
+          required: false
+        - name: has_access
+          in: query
+          description: If parameter set to `1`, would be retieved the projects only if admin/owner is assigned to this projects and projects is not closed (default retrieving all)
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: List of projects
+          schema:
+            $ref: "#/definitions/ProjectsListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Create a project
+      description: |
+        Create a project based on given data.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project will be created
+          type: string
+          required: true
+        - name: name
+          in: formData
+          description: Name of a project
+          type: string
+          required: true
+        - name: short_name
+          in: formData
+          description: Short name of a project
+          type: string
+          required: true
+        - name: first_number_of_tickets
+          in: formData
+          description: First number of ticket - minimum 1
+          type: number
+          required: true
+        - name: time_tracking_visible_for_clients
+          in: formData
+          description: Settings - show or not time tracking for clients
+          type: boolean
+          required: true
+        - name: email_notification_enabled
+          in: formData
+          description: Settings - enable emial notifcation - available only for admin/owner
+          type: boolean
+          required: true
+        - name: slack_notification_enabled
+          in: formData
+          description: Settings - enable slack notifcation - available only for admin/owner
+          type: boolean
+          required: true
+        - name: slack_webhook_url
+          in: formData
+          description: Settings - slack webhook url - available only for admin/owner
+          type: string
+          required: false
+        - name: slack_channel
+          in: formData
+          description: Settings - slack channel - available only for admin/owner
+          type: string
+          required: false
+        - name: language
+          in: formData
+          description: Settings - language for notifications pl or en
+          type: string
+          required: true
+        - name: color
+          in: formData
+          description: Class name for bg and font color
+          type: string
+          required: true
+        - name: users
+          description: Users that will be assigned to this project. At least one user should be specified.
+          required: true
+          in: body
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/UserRoleItem"
+      responses:
+        201:
+          description: Project successfully created
+          schema:
+            $ref: "#/definitions/ProjectResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: The limit of the number of projects has been reached. As code you will get `package.limit_reached`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        410:
+          description: The limit of the number of user in project has been reached. As code you will get `package.too_many_users`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}/clone:
+    post:
+      summary: Clone a project
+      description: |
+        Clone a project.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project belongs to
+          type: string
+          required: true
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: name
+          in: formData
+          description: Project name.
+          type: string
+          required: true
+        - name: short_name
+          in: formData
+          description: Project short name.
+          type: string
+          required: true
+      responses:
+        201:
+          description: Project successfully cloned.
+          schema:
+            $ref: "#/definitions/ProjectResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}/close:
+    put:
+      summary: Close or reopen a project
+      description: |
+        Close or reopen selected project.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project belongs to
+          type: string
+          required: true
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: status
+          in: formData
+          description: Set status of project. Only values `close` or `open` will be accepted.
+          type: string
+          required: true
+      responses:
+        200:
+          description: Project successfully closed or reopened.
+          schema:
+            $ref: "#/definitions/ProjectResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}:
+    get:
+      summary: Display details of the project
+      description: |
+        Display details of the project. Only for Admin/Owner and users in project
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which projects will be listed
+          type: string
+          required: true
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+      responses:
+        200:
+          description: Project details
+          schema:
+            $ref: "#/definitions/ProjectResponseWithEditable"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update project
+      description: |
+        Update project name or short_name. Only for Admin/Owner.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Company id
+          type: string
+          required: true
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: name
+          in: formData
+          description: Name of a project
+          type: string
+          required: true
+        - name: short_name
+          in: formData
+          description: Short name of a project
+          type: string
+          required: true
+        - name: time_tracking_visible_for_clients
+          in: formData
+          description: Settings - show or not time tracking for clients
+          type: boolean
+          required: true
+        - name: status_for_calendar_id
+          in: formData
+          description: Status id for show in callendar realized tasks, if null then disabled
+          type: number
+          format: int
+          required: false
+        - name: email_notification_enabled
+          in: formData
+          description: Settings - enable emial notifcation - available only for admin/owner
+          type: boolean
+          required: true
+        - name: slack_notification_enabled
+          in: formData
+          description: Settings - enable slack notifcation - available only for admin/owner
+          type: boolean
+          required: true
+        - name: slack_webhook_url
+          in: formData
+          description: Settings - slack webhook url - available only for admin/owner
+          type: string
+          required: false
+        - name: slack_channel
+          in: formData
+          description: Settings - slack channel - available only for admin/owner
+          type: string
+          required: false
+        - name: language
+          in: formData
+          description: Settings - language for notifications pl or en
+          type: string
+          required: true
+        - name: color
+          in: formData
+          description: Class name for bg and font color
+          type: string
+          required: true
+        - name: users
+          description: Users that will be assinged to this project. At least one user should be specified. Be aware that users that were assigned before to project will be removed and only users that were sent here will be saved for this project.
+          required: true
+          in: body
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/UserRoleItem"
+      responses:
+        200:
+          description: Project details
+          schema:
+            $ref: "#/definitions/ProjectResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        410:
+          description: The limit of the number of user in project has been reached. As code you will get `package.too_many_users`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    delete:
+      summary: Delete a project
+      description: |
+        Delete selected project.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project belongs to
+          required: true
+          type: string
+        - name: projectId
+          in: path
+          description: Project id
+          required: true
+          type: number
+          format: int
+      responses:
+        204:
+          description: Project successfully deleted. No data will be passed.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}/basic-info:
+    get:
+      summary: Get basic information for given project
+      description: |
+        Get basic information for given project. You don't have to use `selected_company_id` for this request.
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+      responses:
+        200:
+          description: Project successfully closed or reopened.
+          schema:
+            $ref: "#/definitions/ProjectCompanyInfoResponse"
+        401:
+          description: User is not assigned to given project or not assigned to company this project belongs to with approved status. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/exist:
+    get:
+      summary: Verify whether project exist by short name
+      description: |
+        Verify whether project exist by short name in current company.
+      tags:
+        - Projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project will be created
+          type: string
+          required: true
+        - name: short_name
+          in: query
+          description: Short name of a project
+          type: string
+          required: true
+      responses:
+        200:
+          description: Project exists
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+                description: It will be empty array
+              exec_time:
+                type: number
+                format: float
+                description: API execution time
+        404:
+          description: Project doesn't exist.
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}/permissions:
+    get:
+      summary: Show project permissions
+      description: |
+        Show project permissions.
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project belongs to
+          type: string
+          required: true
+
+      responses:
+        200:
+          description: Success response
+          schema:
+            $ref: "#/definitions/ProjectPermissionResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update project permissions
+      description: |
+        Update project permissions.
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+
+        - name: selected_company_id
+          in: query
+          description: Id of company for which project belongs to
+          type: string
+          required: true
+
+        - in: body
+          schema:
+            type: object
+            $ref: "#/definitions/ProjectPermission"
+
+      responses:
+        200:
+          description: Permissions successfully updated.
+          schema:
+            $ref: "#/definitions/ProjectPermissionResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+
+  ProjectPermissionResponse:
+    type: object
+    description: Project permissions response
+    properties:
+      data:
+        $ref: '#/definitions/ProjectPermission'
+
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ProjectPermission:
+    type: object
+    description: Project permissions details
+    properties:
+      ticket_create:
+        type: object
+        description: Permission to create ticket
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+
+      ticket_update:
+        type: object
+        description: Permission to update ticket
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+          relations:
+            type: array
+            items:
+              $ref: "#/definitions/ProjectPermissionValue"
+            example: [
+              {name: 'reporter', value: true},
+              {name: 'assigned', value: true},
+              ]
+
+
+      ticket_destroy:
+        type: object
+        description: Permission to destroy ticket
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+          relations:
+            type: array
+            items:
+              $ref: "#/definitions/ProjectPermissionValue"
+            example: [
+              {name: 'reporter', value: true},
+              {name: 'assigned', value: true},
+              ]
+
+      ticket_comment_create:
+        type: object
+        description: Permission to create tickets comment
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+
+      ticket_comment_update:
+        type: object
+        description: Permission to update tickets comment
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+          relations:
+            type: array
+            items:
+              $ref: "#/definitions/ProjectPermissionValue"
+            example: [
+              {name: 'user', value: true}
+              ]
+
+      ticket_comment_destroy:
+        type: object
+        description: Permission to destroy tickets comment
+        properties:
+          roles:
+            $ref: "#/definitions/ProjectPermissionRoles"
+          relations:
+            type: array
+            items:
+              $ref: "#/definitions/ProjectPermissionValue"
+            example: [
+              {name: 'user', value: true}
+              ]
+
+      owner_ticket_show:
+        type: array
+        description: Permission to show tickets for owner
+        items:
+          $ref: "#/definitions/ProjectPermissionValue"
+        example: [
+          {name: 'all', value: true},
+          {name: 'reporter', value: false},
+          {name: 'assigned', value: false},
+          {name: 'not_assigned', value: false},
+          ]
+
+      admin_ticket_show:
+        type: array
+        description: Permission to show tickets for admin
+        items:
+          $ref: "#/definitions/ProjectPermissionValue"
+        example: [
+          {name: 'all', value: true},
+          {name: 'reporter', value: false},
+          {name: 'assigned', value: false},
+          {name: 'not_assigned', value: false},
+          ]
+
+      developer_ticket_show:
+        type: array
+        description: Permission to show tickets for developer
+        items:
+          $ref: "#/definitions/ProjectPermissionValue"
+        example: [
+          {name: 'all', value: true},
+          {name: 'reporter', value: false},
+          {name: 'assigned', value: false},
+          {name: 'not_assigned', value: false},
+          ]
+
+      client_ticket_show:
+        type: array
+        description: Permission to show tickets for client
+        items:
+          $ref: "#/definitions/ProjectPermissionValue"
+        example: [
+          {name: 'all', value: true},
+          {name: 'reporter', value: false},
+          {name: 'assigned', value: false},
+          {name: 'not_assigned', value: false},
+          ]
+
+  ProjectPermissionValue:
+    type: object
+    properties:
+      name:
+        type: string
+      value:
+        type: boolean
+
+
+  ProjectPermissionRoles:
+    type: array
+    items:
+      $ref: "#/definitions/ProjectPermissionValue"
+    example: [
+      {name: 'owner', value: true},
+      {name: 'admin', value: true},
+      {name: 'client', value: true},
+      {name: 'developer', value: true},
+      ]
+
+
+  ProjectResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Project details
+        properties:
+          id:
+            type: number
+            format: int
+            description: Project id
+          company_id:
+            type: number
+            format: int
+            description: Company id
+          name:
+            type: string
+            description: Project name
+          short_name:
+            type: string
+            description: Project short name
+          status_for_calendar_id:
+            format: int
+            description: Status id - available only for admin/owner
+          time_tracking_visible_for_clients:
+            type: boolean
+            description: Settings - show or not time tracking for clients
+          email_notification_enabled:
+            type: boolean
+            description: Settings - enable emial notifcation - available only for admin/owner
+          slack_notification_enabled:
+            type: boolean
+            description: Settings - enable slack notifcation - available only for admin/owner
+          slack_webhook_url:
+            type: string
+            description: Settings - slack webhook url - available only for admin/owner
+          slack_channel:
+            type: string
+            description: Settings - slack channel - available only for admin/owner
+          language:
+            type: string
+            description: Settings - language for notifications pl or en
+          color:
+            type: string
+            description: Class name for bg and font color
+          closed_at:
+            type: string
+            description: Time when project was closedin format `YYYY-mm-dd`
+          created_at:
+            type: string
+            description: Time when project was created in format `YYYY-mm-dd`
+          updated_at:
+            type: string
+            description: Time when project was last updated in format `YYYY-mm-dd`
+          deleted_at:
+            type: string
+            description: Time when project was deleted in format `YYYY-mm-dd`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ProjectCompanyInfoResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Limitej project information
+        properties:
+          id:
+            type: number
+            format: int
+            description: Project id
+          company_id:
+            type: number
+            format: int
+            description: Company id
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ProjectResponseWithEditable:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Project details
+        properties:
+          id:
+            type: number
+            format: int
+            description: Project id
+          company_id:
+            type: number
+            format: int
+            description: Company id
+          name:
+            type: string
+            description: Project name
+          short_name:
+            type: string
+            description: Project short name
+          time_tracking_visible_for_clients:
+            type: boolean
+            description: Settings - show or not time tracking for clients
+          status_for_calendar_id:
+            type: boolean
+            description: Settings - status id for show in callendar realized tasks, if null then disabled
+          email_notification_enabled:
+            type: boolean
+            description: Settings - enable emial notifcation - available only for admin/owner
+          slack_notification_enabled:
+            type: boolean
+            description: Settings - enable slack notifcation - available only for admin/owner
+          slack_webhook_url:
+            type: string
+            description: Settings - slack webhook url - available only for admin/owner
+          slack_channel:
+            type: string
+            description: Settings - slack channel - available only for admin/owner
+          language:
+            type: string
+            description: Settings - language for notifications pl or en
+          color:
+            type: string
+            description: Class name for bg and font color
+          closed_at:
+            type: string
+            description: Time when project was closedin format `YYYY-mm-dd`
+          created_at:
+            type: string
+            description: Time when project was created in format `YYYY-mm-dd`
+          updated_at:
+            type: string
+            description: Time when project was last updated in format `YYYY-mm-dd`
+          deleted_at:
+            type: string
+            description: Time when project was deleted in format `YYYY-mm-dd`
+          editable_short_name:
+            type: boolean
+            description: Whether `short_name` can be edited for this project
+          stats:
+            type: object
+            schema:
+              $ref: "#/definitions/ProjectStats"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ProjectsListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Projects"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Projects:
+    type: object
+    description: Project details
+    properties:
+      id:
+        type: number
+        format: int
+        description: Project id
+      company_id:
+        type: number
+        format: int
+        description: Company id
+      name:
+        type: string
+        description: Project name
+      short_name:
+        type: string
+        description: Project short name
+      time_tracking_visible_for_clients:
+        type: boolean
+        description: Settings - show or not time tracking for clients
+      color:
+        type: string
+        description: Class name for bg and font color
+      closed_at:
+        type: string
+        description: Time when project was closedin format `YYYY-mm-dd`
+      created_at:
+        type: string
+        description: Time when project was created in format `YYYY-mm-dd`
+      updated_at:
+        type: string
+        description: Time when project was last updated in format `YYYY-mm-dd`
+      deleted_at:
+        type: string
+        description: Time when project was deleted in format `YYYY-mm-dd`
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  UserRoleItem:
+    type: object
+    properties:
+      user_id:
+        type: number
+        format: int
+        description: User id. Only users that are assigned to project's company are allowed (with approved status)
+      role_id:
+        type: number
+        format: int
+        description: Role id. Only roles that are assigned to project's company are allowed.
+
+
+  ProjectStats:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          total_estimate_time:
+            type: number
+            format: int
+            description: Total estimate time of all project tickets in seconds. For Admin/Owner of project it will calculate of tickets of all users, otherwise it will calculate only for current user
+          non_todo_estimate_time:
+            type: number
+            format: int
+            description: Total estimate time of all project tickets in seconds without tickets that are in 1st status (for example TODO). For Admin/Owner of project it will calculate of tickets of all users, otherwise it will calculate only for current user
+          not_estimated_tickets_count:
+            type: number
+            format: int
+            description: Number of not estimated tickets in project
+          not_assigned_tickets_count:
+            type: number
+            format: int
+            description: Number of tickets that are not assigned to any user
+          tracked:
+            type: number
+            format: int
+            description: Time of tracked user activities in seconds. For Admin/Owner of project it will calculate activities of all users, otherwise it will calculate only for current user
+          activity:
+            type: number
+            format: int
+            description: Time of user activitiy in user activities in seconds. For Admin/Owner of project it will calculate activities of all users, otherwise it will calculate only for current user
+          activity_level:
+            type: number
+            format: float
+            description: Activity level of project activities as percentage.  For Admin/Owner of project it will calculate activities of all users, otherwise it will calculate only for current user
+          time_tracking_summary:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/TimeTrackingSummary"
+
+  TimeTrackingSummary:
+    type: object
+    description: Time tracking summary details
+    properties:
+      time_tracking_user_id:
+        type: number
+        format: int
+        description: Id of record containing external system user (this is not user id in this application)
+      user_id:
+        type: number
+        format: int
+        description: Id of user in system. If no matching found it will be null. In such case also `user` won't contain any data in `data` key
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      tracked_sum:
+        type: number
+        format: int
+        description: Summary of tracked time in seconds for time_tracking_user_id
+      activity_sum:
+        type: number
+        format: int
+        description: Summary of activity time in seconds for time_tracking_user_id
+      activity_level:
+        type: number
+        description: Get activity level for summaried activities (as percentage)
+      user:
+        type: object
+        description: Matched user. If no match was found `data` will hold `null` instead of array
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+      time_tracking_user:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/TimeTrackingUser"
+
+
+  TimeTrackingUser:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Time tracking user id
+      integration_id:
+        type: number
+        format: int
+        description: Id of integration
+      user_id:
+        type: number
+        format: int
+        description: User id (it might be null if user was not matched yet)
+      external_user_id:
+        type: string
+        description: Id of user in external system
+      external_user_email:
+        type: string
+        description: User e-mail in external system
+      external_user_name:
+        type: string
+        description: User name in external system
+      created_at:
+        type: string
+        description: Date of time tracking user record creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last tracking user record update in `Y-m-d H:i:s` format
+  User:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User e-mail
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated

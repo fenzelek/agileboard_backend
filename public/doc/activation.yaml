@@ -1,0 +1,133 @@
+swagger: '2.0'
+info:
+  title: Activation
+  description: This section describes activation methods - activating account and resending activation link
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /activation:
+    put:
+      summary: Activate account
+      description: |
+        Activates user account in system. Only users who have activated account can log in into system. **This request does not require authorization**
+      tags:
+        - Activation         
+      parameters:
+        - name: activation_token
+          in: formData
+          description: User activation token
+          required: true
+          type: string         
+      responses:
+        200:
+          description: User account was activated
+          schema: 
+              $ref: "#/definitions/SuccessActivationResponse"
+        404:
+          description: Given activation token is invalid or user is deleted. As code you will get `activation.invalid_token_or_user`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                           
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Account for this e-mail has been already activated. As code you will get `activation.already_activated`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                      
+        429:
+          description: Number of request exceeded (user should wait a while before trying to log in again). As code you will get `general.request_rate_exceeded`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"             
+  /activation/resend:               
+    put:
+      summary: Resend activation token for user.
+      description: |
+        Generates new activation token for user and sends new activation e-mail for this user. **This request does not require authorization**
+      tags:
+        - Activation         
+      parameters:
+        - name: email
+          in: formData
+          description: User e-mail
+          required: true
+          type: string
+        - name: url
+          in: formData
+          description: Url for account activation. It should contain `:token` string - this will be replaced by activation token.
+          required: true
+          type: string
+        - name: language
+          in: formData
+          description: Language for sending email
+          required: false
+          type: string
+      responses:
+        200:
+          description: User activation token was resent
+          schema: 
+              $ref: "#/definitions/SuccessActivationResendResponse"
+        409:
+          description: Account for this e-mail has been already activated. As code you will get `activation.user_already_activated`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"  
+        404:
+          description: User is not found or has been deleted. As code you will get `auth.user_not_found`
+          schema: 
+              $ref: "#/definitions/ErrorResponse" 
+        429:
+          description: Number of request exceeded (user should wait a while before trying to log in again). As code you will get `general.request_rate_exceeded`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                                                   
+        
+                      
+definitions:
+  SuccessActivationResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          token:
+            type: string
+            description: Access token (this is token that can be used to access any other API actions for this user)         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SuccessActivationResendResponse:
+    type: object
+    properties:
+       data:
+        type: string
+        description: In fact it will be empty
+       exec_time:
+        type: number
+        format: float
+        description: API execution time
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

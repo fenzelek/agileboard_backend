@@ -1,0 +1,166 @@
+swagger: '2.0'
+info:
+  title: Gantt
+  description: Display gantt diagram
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /workload:
+    get:
+      summary: List of users with workloads.
+      description: |
+        List of users with workloads.
+      tags:
+        - gantt
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which workloads will be returned
+          required: true
+          type: string
+        - name: from
+          in: query
+          description: Date in format YYYY-mm-dd. This is first day from gantt calendar
+          required: true
+          type: string
+        - name: period
+          in: query
+          description: Number of weeks which should be present on chart (dafault 6)
+          required: false
+          type: integer
+      responses:
+        200:
+          description: List of users with workloads
+          schema:
+              $ref: "#/definitions/WorkloadIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  WorkloadIndexResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: List users with workloads
+        items:
+          $ref: "#/definitions/UsersWorkloads"
+      date_start:
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`
+      date_end:
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UsersWorkloads:
+    type: object
+    properties:
+      user:
+        $ref: "#/definitions/UserDetails"
+      workloads:
+        type: array
+        items:
+          $ref: "#/definitions/UserWorkloads"
+
+  UserDetails:
+    type: object
+    description: Availability data
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User e-mail
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+
+  UserWorkloads:
+    type: object
+    description: User workloads list
+    $ref: "#/definitions/WorkloadDetails"
+
+  WorkloadDetails:
+    type: object
+    description: Workload details
+    properties:
+      start_at:
+        type: string
+        description: Start date of workload in format `Y-m-d H:i:s'
+      end_at:
+        type: string
+        description: Start date of workload in format `Y-m-d H:i:s'
+      rate:
+        type: number
+        format: int
+      project:
+        $ref: "#/definitions/ProjectDetails"
+      sprint:
+        $ref: "#/definitions/SprintDetails"
+
+  ProjectDetails:
+    type: object
+    description: Project details
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      name:
+        type: string
+        description: Project name
+      color:
+        type: string
+        description: Project color on chart
+
+  SprintDetails:
+    type: object
+    description: Sprint details
+    properties:
+      id:
+        type: number
+        format: int
+      name:
+        type: string
+        description: Sprint name
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

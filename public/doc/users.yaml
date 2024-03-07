@@ -1,0 +1,453 @@
+swagger: '2.0'
+info:
+  title: Users
+  description: Display and manage user accounts
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /users:
+    get:
+      summary: Display list of users
+      description: |
+        Displays list of users. Depending on current user role, number of users may differ (for example for Admin we as a result you will get all the users but for others you might get list only of users assigned to same projects)
+      tags:
+        - User
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which users are displayed
+          required: true
+          type: string        
+      responses:
+        200:
+          description: Users list
+          schema: 
+              $ref: "#/definitions/SuccessUsersIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse" 
+    post:
+      summary: Create new user
+      description: |
+        Creates new user account. After account creation activation e-mail will be sent. **This request does not require authorization**
+      tags:
+        - User 
+      parameters:
+        - name: email
+          in: formData
+          description: User e-mail
+          required: true
+          type: string
+        - name: password
+          in: formData
+          description: User password (min 6 characters)
+          required: true
+          type: string
+        - name: password_confirmation
+          in: formData
+          description: User password confirmation (should be exact same as `password`)
+          required: true
+          type: string   
+        - name: first_name
+          in: formData
+          description: User first name
+          required: true
+          type: string     
+        - name: last_name
+          in: formData
+          description: User last name
+          required: true
+          type: string
+        - name: url
+          in: formData
+          description: Url for account activation. It should contain `:token` string - this will be replaced by activation token.
+          required: true
+          type: string
+        - name: language
+          in: formData
+          description: Language for sending email
+          required: false
+          type: string
+      responses:
+        201:
+          description: User was successfully saved
+          schema: 
+              $ref: "#/definitions/UserSavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+  /users/{id}:
+    put:
+      summary: Update of user
+      description: |
+        Update full name and password of user. Password can change super admin and user for yourself. For super admin old_password field is unnecessary
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: number
+          format: number
+        - name: first_name
+          in: formData
+          description: User first name
+          required: true
+          type: string
+        - name: last_name
+          in: formData
+          description: User last name
+          required: true
+          type: string
+        - name: password
+          in: formData
+          description: User new password
+          required: false
+          type: string
+        - name: password_confimation
+          in: formData
+          description: Confimation user new password
+          required: false
+          type: string
+        - name: old_password
+          in: formData
+          description: User current password (only for regular user)
+          required: false
+          type: string
+        - name: avatar
+          in: formData
+          description: User avatar. Uploaded file must be only jpeg or png and must have maximum size of 1MB
+          required: false
+          type: file
+        - name: remove_avatar
+          in: formData
+          description: Accepts parameters 0 and 1, defaults is 0, when is 1 then is deleted user avatar and file won't be uploaded
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: User updated
+          schema:
+              $ref: "#/definitions/UserUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+                  
+  /users/current:
+    get:
+      summary: Display current user data
+      description: |
+        Displays current user data. If `selected_company_id` parameter will be used, it will display extra user details for selected company. Otherwise `selected_user_company` won't hold any useful informations
+      tags:
+        - User
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company selected by this user
+          required: false
+          type: string          
+      responses:
+        200:
+          description: Current user data
+          schema: 
+              $ref: "#/definitions/SuccessUserResponse"
+        401:
+          description: User has no access to display this page. It probably means that he's not logged in.
+          schema: 
+              $ref: "#/definitions/ErrorResponse"        
+
+  /users/current/companies:
+    get:
+      summary: Display companies assigned to current user
+      description: |
+        Displays companies assigned to current user. Only companies where user got approved status will be returned.
+      tags:
+        - User
+        - Company
+      responses:
+        200:
+          description: Companies data for current user.
+          schema:
+              $ref: "#/definitions/CompaniesResponse"
+        401:
+          description: User has no access to display this page. It probably means that he's not logged in.
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: The limit of the number of users has been reached. As code you will get `package.limit_reached`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /users/avatar/{avatar}:
+    get:
+      summary: Display user avatar
+      description: |
+        Display user avatar
+      tags:
+        - User
+      parameters:
+        - name: avatar
+          in: path
+          description: File name.
+          required: true
+          type: string
+      responses:
+        200:
+          description: User avatar
+
+definitions:
+  SuccessUsersIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/User"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  
+  UserSavedResponse:      
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/User"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time   
+             
+  SuccessUserResponse:      
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/UserWithRole"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UserUpdateResponse:
+      type: object
+
+      properties:
+        data:
+          type: string
+          description: It will be empty array
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+             
+  User:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:   
+        type: string
+        description: User e-mail
+      first_name:   
+        type: string
+        description: User first name
+      last_name:   
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated        
+        
+  UserWithRole:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:   
+        type: string
+        description: User e-mail
+      first_name:   
+        type: string
+        description: User first name
+      last_name:   
+        type: string
+        description: User last name
+      role_id:   
+        type: number
+        format: int
+        description: User role id
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated  
+      role:
+        type: string
+        description: User system role. It will be either `system_admin` or `system_user` 
+      selected_user_company:
+          $ref: "#/definitions/SelectedUserCompanyStructure"  
+         
+  SelectedUserCompanyStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Role data
+        items: 
+            $ref: "#/definitions/SelectedUserCompany"          
+                
+  SelectedUserCompany:
+    type: object
+    properties:
+      user_id:              
+        type: number
+        format: int
+        description: User id       
+      company_id:              
+        type: number
+        format: int
+        description: Company id
+      role_id:              
+        type: number
+        format: int
+        description: Role id
+      title:              
+        type: string
+        description: User's title displayed for this company              
+      skills:              
+        type: string
+        description: User's skills displayed for this company
+      description:              
+        type: string
+        description: User's description displayed for this company
+      department:
+        type: string
+        description: User's department displayed for this company
+      role: 
+        $ref: "#/definitions/RoleStructure"        
+      company: 
+        $ref: "#/definitions/CompanyStructure"                          
+
+  RoleStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Role data
+        items: 
+            $ref: "#/definitions/Role"          
+                  
+  Role:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Role id
+      name:   
+        type: string
+        description: Role slug                 
+     
+  CompanyStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Company data
+        items: 
+            $ref: "#/definitions/Company"          
+                  
+  Company:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company id
+      name:   
+        type: string
+        description: Company name
+      enabled:
+        type: string
+        description: Company enabled for current user
+      role:
+        type: object
+        description: User's role in company
+        properties:
+          data:
+            type: object
+            $ref: "#/definitions/Role"
+      owner:
+        type: object
+        description: Owner of the company
+        properties:
+          data:
+            type: object
+            $ref: "#/definitions/User"
+
+  CompaniesResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Company data
+        items:
+         $ref: "#/definitions/Company"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

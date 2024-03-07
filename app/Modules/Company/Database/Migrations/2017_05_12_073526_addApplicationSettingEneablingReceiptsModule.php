@@ -1,0 +1,60 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use App\Models\Other\ModuleType;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+class AddApplicationSettingEneablingReceiptsModule extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        foreach ($this->settings() as $slug => $info) {
+            $application_setting = DB::table('application_settings')->where('slug', $slug)->first();
+            if (empty($application_setting)) {
+                DB::table('application_settings')->insert($info + ['slug' => $slug]);
+            }
+        }
+    }
+
+    /**
+     * Reverse the migration.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        if (Schema::hasTable('application_settings')) {
+            $application_setting = DB::table('application_settings')->where(
+                'slug',
+                ModuleType::RECEIPTS_ACTIVE
+            )->first();
+            if ($application_setting) {
+                DB::table('application_settings')->where(
+                    'slug',
+                    ModuleType::RECEIPTS_ACTIVE
+                )->delete();
+            }
+        }
+    }
+
+    /**
+     * All application settings description.
+     *
+     * @return array
+     */
+    public function settings()
+    {
+        return [
+            ModuleType::RECEIPTS_ACTIVE => [
+                'description' => 'Active receipt module',
+                'default' => false,
+            ],
+        ];
+    }
+}

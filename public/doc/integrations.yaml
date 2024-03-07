@@ -1,0 +1,2035 @@
+swagger: '2.0'
+info:
+  title: Integrations
+  description: Manage integrations
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /integrations/:
+
+    get:
+      summary: Get list of integrations.
+      description: |
+        This action is allowed only for company admin or owner.
+      tags:
+        - Integrations
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: integration_provider_id
+          in: query
+          description: Integration provider id
+          required: false
+          type: integer
+        - name: active
+          in: query
+          description: If set to `1` only active integrations will be returned, if set to `0` only inactive integrations will be returned
+          required: false
+          type: integer
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `company_id`, `integration_provider_id`, `active`, `created_at`, `updated_at`), Example =integration_provider_id,-company_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Integrations list
+          schema:
+            $ref: "#/definitions/IntegrationListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Create new integration
+      description: |
+        Create new integration. This action is allowed only for company owner.
+      tags:
+        - Integrations
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: integration_provider_id
+          in: formData
+          description: Id of integration provider
+          required: true
+          type: integer
+        - name: settings
+          in: formData
+          description: Settings for given integration
+          required: true
+          type: object
+          schema:
+            $ref: "#/definitions/SettingsParameter"
+      responses:
+        200:
+          description: Created integration object
+          schema:
+            $ref: "#/definitions/IntegrationResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        412:
+          description: Given integration for time tracking provider contains invalid data that cannot be used to connect remote services. As code you will get `integration.invalid_time_tracking_data`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/providers:
+    get:
+      summary: Get list of available integrations. This action is not available for company client
+      description: |
+        Get list of available integrations.
+      tags:
+        - Integration providers
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Integration providers list
+          schema:
+            $ref: "#/definitions/IntegrationProviderListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /integrations/time_tracking/activities:
+    get:
+      summary: Get list of time tracking activities in currently selected company.
+      description: |
+        If no project is selected, company owner/admin will see all records (assuming no other filters will be used) and company developer will see only his own records. If project is selected project admin or owner will see all records in this project and project developer will see only his own records.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Activity id
+          required: false
+          type: integer
+        - name: integration_id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: user_id
+          in: query
+          description: It set to `empty` it will return records that don't have `user_id` set. Otherwise it will return records assigned to given user
+          required: false
+          type: string
+        - name: project_id
+          in: query
+          description: It set to `empty` it will return records that don't have `project_id` set. Otherwise it will return records assigned to given project. Be aware when using `project_id` permission will be used for given project so for example user who is company admin but project developer will get only his own activities in this project
+          required: false
+          type: string
+        - name: ticket_id
+          in: query
+          description: It set to `empty` it will return records that don't have `ticket_id` set. Otherwise it will return records assigned to given ticket
+          required: false
+          type: string
+        - name: external_activity_id
+          in: query
+          description: Activity id in external system
+          required: false
+          type: string
+        - name: time_tracking_user_id
+          in: query
+          description: Time tracking user id
+          required: false
+          type: integer
+        - name: time_tracking_project_id
+          in: query
+          description: Time tracking project id
+          required: false
+          type: integer
+        - name: time_tracking_note_id
+          in: query
+          description: Time tracking note id
+          required: false
+          type: integer
+        - name: comment
+          in: query
+          description: Custom comment (this is not comment added in time tracking system). Partial match will be done
+          required: false
+          type: string
+        - name: time_tracking_note_content
+          in: query
+          description: Content of time tracking note. Partial match will be done
+          required: false
+          type: string
+        - name: external_user_id
+          in: query
+          description: External user id
+          required: false
+          type: string
+        - name: min_utc_started_at
+          in: query
+          description: Minimum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_started_at
+          in: query
+          description: Maximum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_utc_finished_at
+          in: query
+          description: Minimum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_finished_at
+          in: query
+          description: Maximum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_tracked
+          in: query
+          description: Minimum tracked time in seconds
+          required: false
+          type: integer
+        - name: max_tracked
+          in: query
+          description: Maximum tracked time in seconds
+          required: false
+          type: integer
+        - name: min_activity_level
+          in: query
+          description: Minimum activity level (percentage)
+          required: false
+          type: number
+        - name: max_activity_level
+          in: query
+          description: Maximum activity level (percentage)
+          required: false
+          type: number
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `integration_id`, `user_id`, `project_id`, `ticket_id`, `external_activity_id`, `time_tracking_user_id`, `time_tracking_project_id`, `time_tracking_note_id`, `comment`, `utc_started_at`, `utc_finished_at`, `tracked`, `activity`, `created_at`, `updated_at`), Example =id,-integration_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+        - name: source
+          in: query
+          description: Data source
+          required: false
+          type: string
+          enum:
+            - hubstaff
+            - time-tracker
+            - manual
+      responses:
+        200:
+          description: Time tracking activities list
+          schema:
+            $ref: "#/definitions/TimeTrackingActivityListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Add manual time tracking activities.
+      description: |
+        Only Company owner/admin can add all company activities.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: user_id
+          in: formData
+          description: User id, `required` when admin/owner want do add activities.
+          required: true
+          type: integer
+        - name: project_id
+          in: formData
+          description: Project Id for which `activities` was assigned
+          required: true
+          type: string
+        - name: ticket_id
+          in: formData
+          description: It set to `empty` it will return records that don't have `ticket_id` set. Otherwise it will return records assigned to given ticket
+          required: true
+          type: string
+        - name: from
+          description: Begin Activity. Accepted DateTime format `Y-m-d h:i:s`
+          in: formData
+          required: true
+          type: string
+        - name: to
+          description: End Activity. Accepted DateTime format `Y-m-d h:i:s`
+          in: formData
+          required: true
+          type: string
+        - name: comment
+          in: formData
+          description: Comment from adding
+          type: string
+      responses:
+        201:
+          description: New Time Activity added
+        204:
+          description: No New Time Activity added
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Bulk update time tracking activities.
+      description: |
+        Company owner/admin can update all company activities, other users can update only their own activities. Maximum 100 records can be updated. Users other than company owner/admin cannot update locked records. Only given activities will be touched. All other existing records will be left without any changes.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: activities
+          description: Activities to update.
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/ActivityUpdateRecord"
+      responses:
+        200:
+          description: Time tracking activities list
+          schema:
+            $ref: "#/definitions/TimeTrackingActivityBulkUpdateResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        403:
+          description: user has no access to manual edition `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Bulk delete manual time tracking activities.
+      description: |
+        Company owner/admin can delete all company manual added activities, Maximum 100 records can be deleted. Only given activities will be touched.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: activities
+          description: Activities to deleted.
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        204:
+          description: Activities deleted
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        405:
+          description: User has not access by manual integration  As code you will get `integration.invalid_remove_method_not_allowed_by_given_ids'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /integrations/time_tracking/activities/export:
+    get:
+      summary: Excel export of time tracking activities in currently selected company.
+      description: Export time tracking activities including exactly the same filters like in the integrations/time_tracking/activities endpoint
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Activity id
+          required: false
+          type: integer
+        - name: integration_id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: user_id
+          in: query
+          description: It set to `empty` it will return records that don't have `user_id` set. Otherwise it will return records assigned to given user
+          required: false
+          type: string
+        - name: project_id
+          in: query
+          description: It set to `empty` it will return records that don't have `project_id` set. Otherwise it will return records assigned to given project. Be aware when using `project_id` permission will be used for given project so for example user who is company admin but project developer will get only his own activities in this project
+          required: false
+          type: string
+        - name: ticket_id
+          in: query
+          description: It set to `empty` it will return records that don't have `ticket_id` set. Otherwise it will return records assigned to given ticket
+          required: false
+          type: string
+        - name: external_activity_id
+          in: query
+          description: Activity id in external system
+          required: false
+          type: string
+        - name: time_tracking_user_id
+          in: query
+          description: Time tracking user id
+          required: false
+          type: integer
+        - name: time_tracking_project_id
+          in: query
+          description: Time tracking project id
+          required: false
+          type: integer
+        - name: time_tracking_note_id
+          in: query
+          description: Time tracking note id
+          required: false
+          type: integer
+        - name: comment
+          in: query
+          description: Custom comment (this is not comment added in time tracking system). Partial match will be done
+          required: false
+          type: string
+        - name: time_tracking_note_content
+          in: query
+          description: Content of time tracking note. Partial match will be done
+          required: false
+          type: string
+        - name: external_user_id
+          in: query
+          description: External user id
+          required: false
+          type: string
+        - name: min_utc_started_at
+          in: query
+          description: Minimum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_started_at
+          in: query
+          description: Maximum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_utc_finished_at
+          in: query
+          description: Minimum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_finished_at
+          in: query
+          description: Maximum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_tracked
+          in: query
+          description: Minimum tracked time in seconds
+          required: false
+          type: integer
+        - name: max_tracked
+          in: query
+          description: Maximum tracked time in seconds
+          required: false
+          type: integer
+        - name: min_activity_level
+          in: query
+          description: Minimum activity level (percentage)
+          required: false
+          type: number
+        - name: max_activity_level
+          in: query
+          description: Maximum activity level (percentage)
+          required: false
+          type: number
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `integration_id`, `user_id`, `project_id`, `ticket_id`, `external_activity_id`, `time_tracking_user_id`, `time_tracking_project_id`, `time_tracking_note_id`, `comment`, `utc_started_at`, `utc_finished_at`, `tracked`, `activity`, `created_at`, `updated_at`), Example =id,-integration_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+        - name: source
+          in: query
+          description: Data source
+          required: false
+          type: string
+          enum:
+            - hubstaff
+            - time-tracker
+            - manual
+        - name: time_zone_offset
+          in: query
+          description: Utc timezone offset
+          required: false
+          type: integer
+        - name: sum_ticket_times
+          in: query
+          description: Utc timezone offset
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: Xlsx file with time tracking activities
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/activities/own:
+    post:
+      summary: Add manual time tracking activities.
+      description: |
+        Users can add only their own activities.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: formData
+          description: Project Id for which `activities` was assigned
+          required: true
+          type: string
+        - name: ticket_id
+          in: formData
+          description: It set to `empty` it will return records that don't have `ticket_id` set. Otherwise it will return records assigned to given ticket
+          required: true
+          type: string
+        - name: from
+          description: Begin Activity. Accepted DateTime format `Y-m-d h:i:s`
+          in: formData
+          required: true
+          type: string
+        - name: to
+          description: End Activity. Accepted DateTime format `Y-m-d h:i:s`
+          in: formData
+          required: true
+          type: string
+        - name: comment
+          in: formData
+          description: Comment from adding
+          type: string
+      responses:
+        201:
+          description: New Time Activity added
+        204:
+          description: No New Time Activity added
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        403:
+          description: user has no access to manual edition `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Delete manual time tracking activities.
+      description: |
+        Users can delete only their own activities.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: activities
+          description: Activities to delete.
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        204:
+          description: Activities deleted
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        405:
+          description: User has not access by manual integration  As code you will get `integration.invalid_remove_method_not_allowed_by_given_ids'
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/activities/summary:
+    get:
+      summary: Get summary list of time tracking activities in currently selected company.
+      description: |
+        If no project is selected, company owner/admin will see all records (assuming no other filters will be used) and company developer will see only his own records. If project is selected project admin or owner will see all records in this project and project developer will see only his own records.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Activity id
+          required: false
+          type: integer
+        - name: integration_id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: user_id
+          in: query
+          description: It set to `empty` it will return records that don't have `user_id` set. Otherwise it will return records assigned to given user
+          required: false
+          type: string
+        - name: project_id
+          in: query
+          description: It set to `empty` it will return records that don't have `project_id` set. Otherwise it will return records assigned to given project. Be aware when using `project_id` permission will be used for given project so for example user who is company admin but project developer will get only his own activities in this project
+          required: false
+          type: string
+        - name: ticket_id
+          in: query
+          description: It set to `empty` it will return records that don't have `ticket_id` set. Otherwise it will return records assigned to given ticket
+          required: false
+          type: string
+        - name: external_activity_id
+          in: query
+          description: Activity id in external system
+          required: false
+          type: string
+        - name: time_tracking_user_id
+          in: query
+          description: Time tracking user id
+          required: false
+          type: integer
+        - name: time_tracking_project_id
+          in: query
+          description: Time tracking project id
+          required: false
+          type: integer
+        - name: time_tracking_note_id
+          in: query
+          description: Time tracking note id
+          required: false
+          type: integer
+        - name: comment
+          in: query
+          description: Custom comment (this is not comment added in time tracking system). Partial match will be done
+          required: false
+          type: string
+        - name: time_tracking_note_content
+          in: query
+          description: Content of time tracking note. Partial match will be done
+          required: false
+          type: string
+        - name: external_user_id
+          in: query
+          description: External user id
+          required: false
+          type: string
+        - name: min_utc_started_at
+          in: query
+          description: Minimum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_started_at
+          in: query
+          description: Maximum start time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_utc_finished_at
+          in: query
+          description: Minimum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: max_utc_finished_at
+          in: query
+          description: Maximum finish time in format `Y-m-d H:i:s`. Be aware that `UTC` time should be used
+          required: false
+          type: string
+        - name: min_tracked
+          in: query
+          description: Minimum tracked time in seconds
+          required: false
+          type: integer
+        - name: max_tracked
+          in: query
+          description: Maximum tracked time in seconds
+          required: false
+          type: integer
+        - name: min_activity_level
+          in: query
+          description: Minimum activity level (percentage)
+          required: false
+          type: number
+        - name: max_activity_level
+          in: query
+          description: Maximum activity level (percentage)
+          required: false
+          type: number
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `integration_id`, `user_id`, `project_id`, `ticket_id`, `external_activity_id`, `time_tracking_user_id`, `time_tracking_project_id`, `time_tracking_note_id`, `comment`, `utc_started_at`, `utc_finished_at`, `tracked`, `activity`, `created_at`, `updated_at`), Example =id,-integration_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time tracking activities list
+          schema:
+            $ref: "#/definitions/SummaryResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /integrations/time_tracking/activities/daily-summary:
+    get:
+      summary: Get daily summary.
+      description: Get daily summary list of time tracking activities in currently selected company.
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: started_at
+          in: query
+          description: Start time in format `Y-m-d`.
+          required: true
+          type: string
+        - name: finished_at
+          in: query
+          description: Finish time in format `Y-m-d`.
+          required: true
+          type: string
+        - name: time_zone_offset
+          in: query
+          description: Time zone offset.
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time tracking activities list
+          schema:
+            $ref: "#/definitions/DailySummaryResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/projects:
+    get:
+      summary: Get list of time tracking projects from external source.
+      description: |
+        This action is allowed only for company admin or owner.
+      tags:
+        - Time tracking projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Time tracking project id
+          required: false
+          type: integer
+        - name: integration_id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: project_id
+          in: query
+          description: It set to `empty` it will return records that don't have `project_id` set. Otherwise it will return records assigned to given project.
+          required: false
+          type: string
+        - name: external_project_id
+          in: query
+          description: Project id in external system
+          required: false
+          type: string
+        - name: external_project_name
+          in: query
+          description: Project name in external system.  Partial match will be done
+          required: false
+          type: string
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `integration_id`, `project_id`, `external_project_id`, `external_project_name`, `created_at`, `updated_at`), Example =id,-integration_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time tracking projects list
+          schema:
+            $ref: "#/definitions/TimeTrackingProjectListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/projects/fetch:
+    put:
+      summary: Fetch list of time tracking projects from external source.
+      description: |
+        This action is allowed only for company admin or owner.
+      tags:
+        - Time tracking projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: integration_id
+          in: formData
+          description: Id of integration
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Time tracking projects list was fetched from external source
+          schema:
+            $ref: "#/definitions/TimeTrackingProjectsFetchResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+  /integrations/time_tracking/projects/{time_tracking_project}:
+    put:
+      summary: Update time tracking project with given system project id.
+      description: |
+        This action is allowed only for company admin or owner. When used all existing activities will be assigned to new system project and for all of them matching tickets process will be done again. Be aware also locked activities will be updated so admin/owner should be extremely careful when they change project instead of assigning new one
+      tags:
+        - Time tracking projects
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: time_tracking_project
+          in: path
+          description: Time tracking project Id
+          type: number
+          format: int
+          required: true
+        - name: project_id
+          in: formData
+          description: Id of system project
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Time tracking project was updated
+          schema:
+            $ref: "#/definitions/TimeTrackingProjectUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/users:
+    get:
+      summary: Get list of time tracking users from external source.
+      description: |
+        This action is allowed only for company admin or owner.
+      tags:
+        - Time tracking users
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Time tracking user id
+          required: false
+          type: integer
+        - name: integration_id
+          in: query
+          description: Integration id
+          required: false
+          type: integer
+        - name: user_id
+          in: query
+          description: It set to `empty` it will return records that don't have `user_id` set. Otherwise it will return records assigned to given user.
+          required: false
+          type: string
+        - name: external_user_id
+          in: query
+          description: User id in external system
+          required: false
+          type: string
+        - name: external_user_name
+          in: query
+          description: User name in external system.  Partial match will be done
+          required: false
+          type: string
+        - name: external_user_email
+          in: query
+          description: User e-mail in external system.  Partial match will be done
+          required: false
+          type: string
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `integration_id`, `user_id`, `external_user_id`, `external_user_email`, `external_user_name`, `created_at`, `updated_at`), Example =id,-integration_id
+          required: false
+          type: integer
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time tracking projects list
+          schema:
+            $ref: "#/definitions/TimeTrackingUserListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/screens:
+    get:
+      summary: Get list of screens tracking activities in currently selected company.
+      description: |
+        company owner/admin will see screens by selected user and company developer will see only his own screens.
+      tags:
+        - Time tracking Screens
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: It set to `empty` it will return own records. Otherwise it will return records assigned to given user
+          required: false
+          type: string
+        - name: project_id
+          in: query
+          description: It set to `empty` it will return records that don't have `project_id` set. Otherwise it will return records assigned to given project. Be aware when using `project_id` permission will be used for given project so for example user who is company admin but project developer will get only his own activities in this project
+          required: false
+          type: string
+        - name: date
+          in: query
+          description: Date in format `Y-m-d`. Be aware that `UTC` time should be used
+          required: true
+          type: string
+        - name: page
+          in: query
+          description: Number of page of results
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: Number of results on single page
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time tracking Screens list
+          schema:
+            $ref: "#/definitions/TimeTrackingScreensListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /integrations/time_tracking/report:
+    get:
+      summary: Get company users time tracking report for day
+      description: Get company users time tracking report for given day or current day if day not provided
+      tags:
+        - Time tracking activities
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          type: integer
+        - name: day
+          in: query
+          description: Date in format `Y-m-d`. If not passed Be aware that `UTC` time should be used
+          type: string
+      responses:
+        200:
+          description: Time tracking projects list
+          schema:
+            $ref: "#/definitions/TimeTrackingActivityReport"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+definitions:
+  IntegrationProviderListResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/IntegrationProvider"
+
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  SettingsParameter:
+    type: object
+    properties:
+      app_token:
+        type: string
+        description: Required only for integration provider with slug `hubstaff`.
+      auth_token:
+        type: string
+        description: Required only for integration provider with slug `hubstaff`.
+      start_time:
+        type: string
+        description: Date and time in UTC format. Required only for integration provider with slug `hubstaff`. From this time time tracking records will be collected (It can be datetime in past or in future).
+
+
+  IntegrationResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of integration
+            company_id:
+              type: number
+              format: int
+              description: Id of company
+            integration_provider_id:
+              type: number
+              format: int
+              description: Id of integration provider
+            active:
+              type: boolean
+              description: Whether integration is active
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  SummaryResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          sum_time:
+            type: number
+            format: int
+            description: Sum time
+  DailySummaryResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+              description: Date
+            tracked:
+              type: number
+              format: int
+              description: Sum tracked time in seconds
+
+  TimeTrackingScreensListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of activity
+            integration_id:
+              type: number
+              format: int
+              description: Id of integration
+            user_id:
+              type: number
+              format: int
+              description: Id of system user. It might be null if no user was assigned.
+            project_id:
+              type: number
+              format: int
+              description: Id of system project. It might be null if no project was assigned.
+            ticket_id:
+              type: number
+              format: int
+              description: Id of system ticket. It might be null if no ticket was assigned.
+            utc_started_at:
+              type: string
+              description: Date when this activity was started in UTC timezone (date in format `Y-m-d H:i:s`)
+            utc_finished_at:
+              type: string
+              description: Date when this activity was stopped in UTC timezone (date in format `Y-m-d H:i:s`)
+            tracked:
+              type: number
+              format: int
+              description: Time of this activity in seconds
+            activity:
+              type: number
+              format: int
+              description: Time of user activity in this activity in seconds
+            activity_level:
+              type: number
+              format: float
+              description: Activity level in this activity as percentage.
+            comment:
+              type: string
+              description: Comment (it's not time tracking comment)
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+            screens:
+              type: array
+              description: Array of screens
+              items:
+                type: object
+                description: screens big and small
+                schema:
+                  $ref: "#/definitions/Screen"
+            user:
+              type: object
+              description: If no user asssigned `data` will be null
+              schema:
+                $ref: "#/definitions/GenericUser"
+            project:
+              type: object
+              description: If no project asssigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                        format: int
+                        description: Project id
+                      company_id:
+                        type: number
+                        format: int
+                        description: Company id
+                      name:
+                        type: string
+                        description: Project name
+                      short_name:
+                        type: string
+                        description: Project short name
+                      closed_at:
+                        type: string
+                        description: Time when project was closedin format `YYYY-mm-dd`
+                      created_at:
+                        type: string
+                        description: Time when project was created in format `YYYY-mm-dd`
+                      updated_at:
+                        type: string
+                        description: Time when project was last updated in format `YYYY-mm-dd`
+                      deleted_at:
+                        type: string
+                        description: Time when project was deleted in format `YYYY-mm-dd`
+            ticket:
+              type: object
+              description: If no ticket asssigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: Ticket id
+                        type: integer
+                      name:
+                        description: Ticket name
+                        type: string
+                      title:
+                        description: Ticket title
+                        type: string
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  TimeTrackingActivityListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of activity
+            integration_id:
+              type: number
+              format: int
+              description: Id of integration
+            user_id:
+              type: number
+              format: int
+              description: Id of system user. It might be null if no user was assigned.
+            project_id:
+              type: number
+              format: int
+              description: Id of system project. It might be null if no project was assigned.
+            ticket_id:
+              type: number
+              format: int
+              description: Id of system ticket. It might be null if no ticket was assigned.
+            external_activity_id:
+              type: string
+              description: Id of activity in external system.
+            time_tracking_user_id:
+              type: number
+              format: int
+              description: Id of time tracking user
+            time_tracking_project_id:
+              type: number
+              format: int
+              description: Id of time tracking project
+            time_tracking_note_id:
+              type: number
+              format: int
+              description: Id of time tracking note. It might be null if no note was assigned.
+            utc_started_at:
+              type: string
+              description: Date when this activity was started in UTC timezone (date in format `Y-m-d H:i:s`)
+            utc_finished_at:
+              type: string
+              description: Date when this activity was stopped in UTC timezone (date in format `Y-m-d H:i:s`)
+            tracked:
+              type: number
+              format: int
+              description: Time of this activity in seconds
+            activity:
+              type: number
+              format: int
+              description: Time of user activity in this activity in seconds
+            activity_level:
+              type: number
+              format: float
+              description: Activity level in this activity as percentage.
+            comment:
+              type: string
+              description: Comment (it's not time tracking comment)
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+            locked_user_id:
+              type: number
+              format: int
+              description: Id of user who locked this record
+            locked:
+              type: boolean
+              description: Whether record has been locked
+            isManual:
+              type: boolean
+              description: When activity is added manualy
+            isLonger:
+              type: boolean
+              description: When activity is longer than a certain value
+            screens:
+              type: array
+              description: Array of screens
+              items:
+                type: object
+                description: screens big and small
+                schema:
+                  $ref: "#/definitions/Screen"
+            user:
+              type: object
+              description: If no user asssigned `data` will be null
+              schema:
+                $ref: "#/definitions/GenericUser"
+
+
+            project:
+              type: object
+              description: If no project asssigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                        format: int
+                        description: Project id
+                      company_id:
+                        type: number
+                        format: int
+                        description: Company id
+                      name:
+                        type: string
+                        description: Project name
+                      short_name:
+                        type: string
+                        description: Project short name
+                      closed_at:
+                        type: string
+                        description: Time when project was closedin format `YYYY-mm-dd`
+                      created_at:
+                        type: string
+                        description: Time when project was created in format `YYYY-mm-dd`
+                      updated_at:
+                        type: string
+                        description: Time when project was last updated in format `YYYY-mm-dd`
+                      deleted_at:
+                        type: string
+                        description: Time when project was deleted in format `YYYY-mm-dd`
+
+            ticket:
+              type: object
+              description: If no ticket asssigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: Ticket id
+                        type: integer
+                      name:
+                        description: Ticket name
+                        type: string
+                      title:
+                        description: Ticket title
+                        type: string
+
+            time_tracking_user:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: Time tracking user id
+                        type: integer
+                      integration_id:
+                        description: Integration id
+                        type: integer
+                      user_id:
+                        description: Id of user
+                        type: integer
+                      external_user_id:
+                        description: Id of user in external system
+                        type: string
+                      external_user_email:
+                        description: Email of user in external system
+                        type: string
+                      external_user_name:
+                        description: Name of user in external system
+                        type: string
+                      created_at:
+                        type: string
+                        description: Time when time tracking user was created in format `YYYY-mm-dd`
+                      updated_at:
+                        type: string
+                        description: Time when time tracking user was last updated in format `YYYY-mm-dd`
+
+            time_tracking_note:
+              type: object
+              description: If no time tracking note assigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: Time tracking note id
+                        type: integer
+                      integration_id:
+                        description: Integration id
+                        type: integer
+                      external_note_id:
+                        description: Id of note in external system
+                        type: string
+                      external_project_id:
+                        description: Id of project in external system
+                        type: string
+                      content:
+                        description: Content
+                        type: string
+                      utc_recorded_at:
+                        description: Date when this note was recorded in UTC timezone (date in format `Y-m-d H:i:s`)
+                        type: string
+                      created_at:
+                        type: string
+                        description: Time when time tracking note was created in format `YYYY-mm-dd`
+                      updated_at:
+                        type: string
+                        description: Time when time tracking note was last updated in format `YYYY-mm-dd`
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TimeTrackingProjectListResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of time tracking project
+            integration_id:
+              type: number
+              format: int
+              description: Id of integration
+            project_id:
+              type: number
+              format: int
+              description: Id of system project. It might be null if no project was assigned.
+            external_project_id:
+              type: string
+              description: Id of project in external system.
+            external_project_name:
+              type: string
+              description: Name of project in external system.
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+            project:
+              type: object
+              description: If no project asssigned `data` will be null
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                        format: int
+                        description: Project id
+                      company_id:
+                        type: number
+                        format: int
+                        description: Company id
+                      name:
+                        type: string
+                        description: Project name
+                      short_name:
+                        type: string
+                        description: Project short name
+                      closed_at:
+                        type: string
+                        description: Time when project was closedin format `YYYY-mm-dd`
+                      created_at:
+                        type: string
+                        description: Time when project was created in format `YYYY-mm-dd`
+                      updated_at:
+                        type: string
+                        description: Time when project was last updated in format `YYYY-mm-dd`
+                      deleted_at:
+                        type: string
+                        description: Time when project was deleted in format `YYYY-mm-dd`
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TimeTrackingUserListResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of time tracking user
+            integration_id:
+              type: number
+              format: int
+              description: Id of integration
+            user_id:
+              type: number
+              format: int
+              description: Id of system user. It might be null if no project was assigned.
+            external_user_id:
+              type: string
+              description: Id of user in external system.
+            external_user_email:
+              type: string
+              description: E-mail of user in external system.
+            external_user_name:
+              type: string
+              description: Name of user in external system.
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+            user:
+              type: object
+              description: If no user asssigned `data` will be null
+              schema:
+                $ref: "#/definitions/GenericUser"
+
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  GenericUser:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User e-mail
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated
+
+
+  IntegrationListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of integration
+            company_id:
+              type: number
+              format: int
+              description: Id of company
+            integration_provider_id:
+              type: number
+              format: int
+              description: Id of integration provider
+            active:
+              type: boolean
+              description: Whether integration is active or not.
+            created_at:
+              type: string
+              description: Date of record creation (date in format `Y-m-d H:i:s`)
+            updated_at:
+              type: string
+              description: Date of last record update (date in format `Y-m-d H:i:s`)
+            provider:
+              type: object
+              description: If no provider asssigned `data` will be null
+              schema:
+                $ref: "#/definitions/IntegrationProvider"
+            public_settings:
+              type: object
+              description: Public settings (no keys will be revealed). Data might differ depending on provider and data set during adding new integration
+              schema:
+                $ref: "#/definitions/PublicSettings"
+
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+
+  Screen:
+    type: object
+    properties:
+      thumb:
+        type: string
+        description: Small screen url
+      url:
+        type: string
+        description: Normal screen url
+
+  IntegrationProvider:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of integration provider
+      slug:
+        type: string
+        description: Slug
+      name:
+        type: string
+        description: Name
+      type:
+        type: string
+        description: Type of provider
+      created_at:
+        type: string
+        description: Date of record creation (date in format `Y-m-d H:i:s`)
+      updated_at:
+        type: string
+        description: Date of last record update (date in format `Y-m-d H:i:s`)
+
+
+  TimeTrackingProjectsFetchResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        description: In fact it will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TimeTrackingActivityBulkUpdateResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        description: In fact it will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  TimeTrackingProjectUpdateResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        description: In fact it will be empty
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TimeTrackingUpdateActivityResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        description: In fact it will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TimeTrackingProject:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of time tracking project
+      integration_id:
+        type: number
+        format: int
+        description: Id of integration
+      project_id:
+        type: number
+        format: int
+        description: Id of system project. It might be null if no project was assigned.
+      external_project_id:
+        type: string
+        description: Id of project in external system.
+      external_project_name:
+        type: string
+        description: Name of project in external system.
+      created_at:
+        type: string
+        description: Date of record creation (date in format `Y-m-d H:i:s`)
+      updated_at:
+        type: string
+        description: Date of last record update (date in format `Y-m-d H:i:s`)
+
+  ActivityUpdateRecord:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of activity.
+        required: true
+      project_id:
+        type: number
+        format: int
+        description: Id of project that should be assigned. For company admin/owner it might be any project in company, for other users it has to be project they are assigned to. Might be set to `null`
+        required: true
+      ticket_id:
+        type: number
+        format: int
+        description: Id of ticket that should be assigned. This should match id of ticket assigned to project with id that was set in `project_id` field. Might be set to `null`
+        required: true
+      comment:
+        type: string
+        description: Optional comment. Be aware this is additional comment and not time tracking note comment
+        required: true
+      locked:
+        type: boolean
+        description: Whether record should be locked or not. It will work only for company admin/owner and only for company admin/owner it's required.
+        required: true
+
+  PublicSettings:
+    type: object
+    properties:
+      start_time:
+        type: string
+        description: Date and time in UTC format when this integration started.
+
+  TimeTrackingActivityReport:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: User id
+      email:
+        type: string
+        description: User email
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      is_available:
+        type: boolean
+        description: True if user provide availability in calendar
+      availability_seconds:
+        type: integer
+        description: Amount of user availability seconds
+      work_progress:
+        type: number
+        description: Tracked+manually added seconds to availability_seconds ratio
+      manual_activity_seconds:
+        type: integer
+        description: Sum of manually added time tracking time in seconds
+      tracking_activity_seconds:
+        type: integer
+        description: Sum of tracked time in seconds
+      manual_activity_tickets:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Ticket id
+            title:
+              type: string
+              description: Ticket title
+            name:
+              type: string
+              description: Ticket name
+            manual_activity:
+              type: integer
+              description: Sum of manually added time for ticket

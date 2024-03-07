@@ -1,0 +1,91 @@
+swagger: '2.0'
+info:
+  title: Payment methods
+  description: Display available payment methods
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /payment-methods:
+    get:
+      summary: Display list of payment methods
+      description: |
+        Displays list of available payment methods.
+      tags:
+        - Payment method
+      parameters:
+        - name: invoice_restrict
+          in: query
+          description: Filtering payment methods with restriction for invoice
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: Payment methods list
+          schema: 
+              $ref: "#/definitions/SuccessPaymentMethodsIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessPaymentMethodsIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentMethod"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  PaymentMethod:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Payment method id
+      slug:
+        type: string
+        description: Payment method slug name
+      name:   
+        type: string
+        description: Payment method name
+      invoice_restrict:
+        type: boolean
+        description: Restrict for invoice
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

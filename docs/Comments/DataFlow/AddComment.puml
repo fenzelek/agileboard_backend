@@ -1,0 +1,35 @@
+@startuml
+title Add/Edit comment to Task/Document \n
+
+start
+
+:Start write **comment** to Task/Document ;
+
+if (\nIs comment with interaction?\n) then (yes)
+partition Interaction recipients {
+    :**Get_available_interaction_types()** \n (Involved, allInProject, Direct);
+    :**Get_available_interaction_users()** \n (Users list associated with project);
+}
+
+else (no)
+
+endif
+
+    : **Add_comment()** \n(with interaction list)  ;
+
+'partition "Backend" {
+'    if (\nIs comment with interaction?\n) then (yes)
+'    else (no)
+'        :Find_related_interactions_to_ping;
+'        note right: With message note:\n Added a comment\n in 'Document/Task'\n -where you were active in last X datetime \n -where you were active in last Y interaction. \n **X/Y from config files**
+'    endif
+'        :Add_new_interactions;
+'
+'
+'    repeat
+'        :Add_new_notification;
+'    repeat while ( more interaction? \n (multi interactions in one comment \n or interaction with group)) is (yes)
+'}
+stop
+
+@enduml

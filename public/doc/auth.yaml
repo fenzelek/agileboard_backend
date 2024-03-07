@@ -1,0 +1,164 @@
+swagger: '2.0'
+info:
+  title: Authorization
+  description: This section describes authorization methods - log in (to get **token**), log out (to remove **token**) and additional method to log in via **quick token** . All API calls except Authorization itself  (if not stated otherwise) will require sending authorization token (see `POST /auth` for details).
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /auth:
+    post:
+      summary: Generate new access token for user
+      description: |
+        In order to use API user needs to authorize themselves. In case of valid user credentials are given, user will get **token** that should be used to make any API requests. This token should be sent in request in `Authorization` header, for example `Authorization: Bearer sample_token`
+      tags:
+        - Authorization         
+      parameters:
+        - name: email
+          in: formData
+          description: User e-mail
+          required: true
+          type: string
+        - name: password
+          in: formData
+          description: User password
+          required: true
+          type: string         
+      responses:
+        201:
+          description: User token was created
+          schema: 
+              $ref: "#/definitions/SuccessAuthPostResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: Invalid e-mail/password pair (or user deleted) -  as code you will get `auth.invalid_login_data` or user is not activated - as code you will get `auth.user_not_activated`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"              
+        403:
+          description: Already authorized. As code you will get `auth.user_already_logged`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        429:
+          description: Number of request exceeded (usee should wait a while before trying to log in again). As code you will get `general.request_rate_exceeded`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        500:
+          description: Cannot generate token. As code you will get `auth.cannot_create_token`
+          schema: 
+              $ref: "#/definitions/ErrorResponse" 
+    delete:
+      summary: Remove access token for user
+      description: |
+        For security purposes user should always log in to invalidate his access token so it couldn't be used any more. In order to do that, user needs to be authorized (so you need to send existing token in `Authorization` header.
+      tags:
+        - Authorization        
+      responses:
+        204:
+          description: User token was removed
+          schema: 
+              $ref: "#/definitions/SuccessAuthDeleteResponse"
+        401:
+          description: Invalid token or no token sent. As code you will get `auth.invalid_token`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        400:
+          description: Token is expired and cannot be refreshed. User needs to authorize again. As code you will get `auth.expired_token`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"  
+        404:
+          description: User is not found or has been deleted. As code you will get `auth.user_not_found`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"              
+  /auth/quick:
+    post:
+      summary: Generate new access token for user from Quick token
+      description: |
+        You need to have generated quick token in order to log in using this action. **This action does not require authorization. You shouldn't send access token in this request**.
+      tags:
+        - Authorization         
+      parameters:
+        - name: token
+          in: formData
+          description: Quick token
+          required: true
+          type: string         
+      responses:
+        201:
+          description: Access token was created. Quick token was automatically deleted.
+          schema: 
+              $ref: "#/definitions/SuccessAuthPostResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"            
+        403:
+          description: Already authorized. As code you will get `auth.user_already_logged`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        429:
+          description: Number of request exceeded (usee should wait a while before trying to log in again). As code you will get `general.request_rate_exceeded`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        500:
+          description: Cannot generate access token. As code you will get `auth.cannot_create_token`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"    
+        404:
+          description: Invalid token given or this token was expired. As code you will get `general.no_resource_found`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                    
+                      
+definitions:
+  SuccessAuthPostResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          token:
+            type: string
+            description: Token          
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SuccessAuthDeleteResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: It will be empty
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

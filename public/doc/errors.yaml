@@ -1,0 +1,195 @@
+swagger: '2.0'
+info:
+  title: Error Logs
+  description: Display error logs.
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /errors:
+    get:
+      summary: Display error logs
+      description: |
+        Admin, owner or employee can display all errors in company. Can be filtered by user, json and action.
+      tags:
+        - Errors
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which error logs will be displayed
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user for which error logs will be displayed
+          required: false
+          type: integer
+        - name: request
+          in: query
+          description: Error logs will be filtered by finding given strings in request sting (JSON containing requests inputs).
+                       Must be send like array, for example `request[]=string` and next string `request[]=string2`.
+          required: false
+          type: string
+        - name: url
+          in: query
+          description: String describing action/url for which error logs will be dislayed. Can take two values `recepts` or `online_sale`.
+          required: false
+          type: string
+      responses:
+        200:
+          description: List of company error logs.
+          schema:
+              $ref: "#/definitions/ErrorLogsListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    delete:
+      summary: Delete error logs
+      description: |
+        Admin, owner or employee can delete all error logs for selected company.
+      tags:
+        - Errors
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which error logs will be displayed
+          required: true
+          type: integer
+      responses:
+        204:
+          description: Error logs deleted succesfully. No data passed in response.
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ErrorLogsListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/ErrorLog"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorLog:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt id
+      company_id:
+        type: integer
+        description: Company id
+      user_id:
+        type: string
+        description: User id
+      transaction_number:
+        type: string
+        description: Transaction id
+      url:
+        type: string
+        description: Url address of send request for which error was logged
+      method:
+        type: string
+        description: Method of send request for which error was logged
+      request:
+        type: string
+        description: String containg json of all inputs in request for which error was logged
+      status_code:
+        type: number
+        description: Code of logged error
+      response:
+        type: string
+        description: String containg response on send request
+      request_date:
+        type: string
+        description: Date of sending request in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of error log creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last error log update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+   type: object
+   properties:
+    total:
+      type: number
+      format: integer
+      description: Total number of results
+    count:
+      type: number
+      format: integer
+      description: Number of returned results
+    per_page:
+      type: number
+      format: integer
+      description: Number of results per page
+    current_page:
+      type: number
+      format: integer
+      description: Number of current page
+    total_pages:
+     type: number
+     format: integer
+     description: Total number of pages
+    links:
+     $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)

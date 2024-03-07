@@ -1,0 +1,275 @@
+swagger: '2.0'
+info:
+  title: Projects Users
+  description: This section allow you to manage users in project.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:     
+  /projects/{projectId}/users:
+    get:
+      summary: Display list of users in the project.
+      description: |
+        Display list of users in the project. Only users in project and admin/owner can access this.
+      tags:
+        - Project users
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: selected_company_id
+          in: query
+          description: Id of company where project belongs to
+          type: string
+          required: true
+        - name: search
+          in: query
+          description: Search users with given pattern. Search will be done in first name, last name and e-mail fields. If you pass for example `abc def` all users having `abc` or `def` in mentioned fields will be returned 
+          type: string
+          required: false        
+        - name: user_id
+          in: query
+          description: If given, only records for given user will be returned (in fact it should be always only single record). IF you use special value `current` as value for this parameter, current user id will be used 
+          type: number
+          format: int
+          required: false             
+      responses:
+        200:
+          description: List users in project.
+          schema:
+              $ref: "#/definitions/UsersListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Attach user to the project.
+      description: |
+        Attach user to the project and give him specified role.
+      tags:
+        - Project users
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: selected_company_id
+          in: query
+          description: Id of company where project belongs to
+          type: string   
+          required: true
+        - name: user_id
+          in: formData
+          description: Id of user which will be attached to project
+          type: string
+          required: true
+        - name: role_id
+          in: formData
+          description: Id of role which will be added to user for this project
+          type: string
+          required: true          
+      responses:
+        201:
+          description: User successfully added to project
+          schema: 
+              $ref: "#/definitions/ProjectUserResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        410:
+          description: The limit of the number of user in project has been reached. As code you will get `package.too_many_users`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{projectId}/users/{userId}:
+    delete:
+      summary: Detach user from the project.
+      description: |
+        Detach user from the project.
+      tags:
+        - Project users
+      parameters:
+        - name: projectId
+          in: path
+          description: Project id
+          type: number
+          format: int
+          required: true
+        - name: userId
+          in: path
+          description: Id of user which will be detached from project
+          type: number
+          format: int
+          required: true
+        - name: selected_company_id
+          in: query
+          description: Id of company where project belongs to
+          type: string
+          required: true
+      responses:
+        204:
+          description: User successfully detached from project. No data passed.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions: 
+  ProjectUserResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Project user details
+        properties:          
+          project_id:
+            type: number
+            format: int
+            description: Project id
+          user_id:
+            type: number
+            format: int
+            description: User id
+          role_id:
+            type: number
+            format: int
+            description: User role id
+          created_at:   
+            type: string
+            description: Time when project was created in format `YYYY-mm-dd`
+          updated_at:   
+            type: string
+            description: Time when project was last updated in format `YYYY-mm-dd`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UsersListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: List of users in project
+        items:
+          $ref: "#/definitions/UserListItem"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UserListItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of the record in DB
+      user_id:
+        type: number
+        format: int
+        description: User id
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      role_id:
+        type: number
+        format: int
+        description: Role id
+      created_at:
+        type: string
+        description: Time when user was attached to project in format `YYYY-mm-dd`
+      updated_at:
+        type: string
+        description: Time when record was updated in format `YYYY-mm-dd`
+      user:
+        type: object
+        properties:
+          data:
+            type: object
+            properties:
+              id:
+                type: number
+                format: int
+                description: User id
+              email:
+                type: string
+                description: User email
+              first_name:
+                type: string
+                description: User first name
+              last_name:
+                type: string
+                description: User last name
+              avatar:
+                type: string
+                description: Avatar file url
+              activated:
+                type: boolean
+                description: Tells if user is already activated
+              deleted:
+                type: boolean
+                description: Tells if user is deleted
+      role:
+        type: object
+        properties:
+          data:
+            type: object
+            properties:
+              id:
+                type: number
+                format: int
+                description: Role id
+              name:
+                type: string
+                description: Name of the role
+              default:
+                type: number
+                format: int
+                description: Default role id
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

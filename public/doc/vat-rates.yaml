@@ -1,0 +1,83 @@
+swagger: '2.0'
+info:
+  title: Vat rates
+  description: Display available vat rates
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /vat-rates:
+    get:
+      summary: Display list of vat rates
+      description: |
+        Displays list of available vat rates.
+      tags:
+        - Vat rate
+      responses:
+        200:
+          description: Vat rates list
+          schema: 
+              $ref: "#/definitions/SuccessVatRatesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessVatRatesIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/VatRate"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  VatRate:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Vat rate id
+      rate:
+        type: number
+        format: int
+        description: Vat rate value
+      name:   
+        type: string
+        description: Vat rate name
+      is_visible:
+        type: number
+        format: int
+        description: Whether the item should be shown on the list
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

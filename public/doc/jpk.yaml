@@ -1,0 +1,296 @@
+swagger: '2.0'
+info:
+  title: JPK
+  description: Actions connected to JPK
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - text/xml  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoices/jpk/fa:
+    get:
+      summary: Generate JPK_FA file
+      description: |
+        Generate JPK_FA file in `text/xml` format.
+      tags:
+        - JPK
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer      
+        - name: start_date
+          in: query
+          description: Start date of invoices in JPK. It has to be in format `Y-m-d`
+          required: true
+          type: string
+        - name: end_date
+          in: query
+          description: End date of invoices in JPK. It has to be in format `Y-m-d` and has to be  equal or later than value in `start_date`
+          required: true
+          type: string        
+      responses:
+        200:
+          description: JPK-FA file content
+          schema: 
+              $ref: "#/definitions/SuccessJpkFaResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Company has not JPK-FA enabled - as code you will get `sale_invoice.jpk_not_enabled` or company doesn't have filled in JPK details  - as code you will get `sale_invoice.jpk_details_missing` or company has `vat_payer` set to `null` - as code you will get `sale_invoice.jpk_vat_payer_not_filled_in`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"   
+  /companies/jpk_details:
+    get:
+      summary: Get JPK details of company
+      description: |
+        Get JPK details of company.
+      tags:
+        - JPK details
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer           
+      responses:
+        200:
+          description: JPK details
+          schema: 
+              $ref: "#/definitions/SuccessJpkDetailsShowResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"          
+              
+    put:
+      summary: Update JPK details of company
+      description: |
+        Update JPK details of company. If JPK details of company haven't existed yet, they will 
+        be automatically created.
+      tags:
+        - JPK details
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer   
+        - name: regon
+          in: formData
+          description: Company REGON (9 or 14 digits), might be set as `null`
+          required: true
+          type: string
+        - name: state
+          in: formData
+          description: Name of state (województwo)
+          required: true
+          type: string     
+        - name: county
+          in: formData
+          description: Name of county (powiat)
+          required: true
+          type: string  
+        - name: county
+          in: formData
+          description: Name of community (gmina)
+          required: true
+          type: string       
+        - name: street
+          in: formData
+          description: Name of street
+          required: true
+          type: string      
+        - name: building_number
+          in: formData
+          description: Number of building, might be set as `null`
+          required: true
+          type: string  
+        - name: flat_number
+          in: formData
+          description: Number of flat, might be set as `null`
+          required: true
+          type: string    
+        - name: city
+          in: formData
+          description: Name of city
+          required: true
+          type: string    
+        - name: zip_code
+          in: formData
+          description: Zip code (7 characters)
+          required: true
+          type: string          
+        - name: postal
+          in: formData
+          description: Postal name (poczta)
+          required: true
+          type: string   
+        - name: tax_office_id
+          in: formData
+          description: Id of company tax office
+          required: true
+          type: string                                                              
+      responses:
+        200:
+          description: JPK details
+          schema: 
+              $ref: "#/definitions/SuccessJpkDetailsShowResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Company does not have JPK details yet. As code you will get `general.no_resource_found`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"              
+                                       
+                      
+definitions:
+  SuccessJpkFaResponse:
+    type: string
+    examples:
+      summary: A sample XML response
+      value: "<?xml version=\"1.0\" encoding=\"utf-8\"?>..."
+      
+  SuccessJpkDetailsShowResponse:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/JpkDetailsItem"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time  
+        
+  JpkDetailsItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: JPK details id
+      company_id:
+        type: integer
+        description: Id of company this details belongs to        
+      regon:
+        type: string
+        description: Company REGON
+      state:
+        type: string
+        description: Company state (województwo)
+      county:
+        type: string
+        description: Company county (powiat)
+      community:
+        type: string
+        description: Company community (gmina)
+      street:
+        type: string
+        description: Company street
+        type: string
+      building_number:
+        type: string
+        description: Company building number
+        type: string    
+      flat_number:
+        type: string
+        description: Company flat number
+        type: string    
+      city:
+        type: string
+        description: Company city
+        type: string      
+      zip_code:
+        type: string
+        description: Company zip-code
+        type: string      
+      postal:
+        type: string
+        description: Company postal (poczta)
+        type: string             
+      tax_office_id:
+        type: number
+        format: int
+        description: Company tax office id                   
+      created_at:
+        type: string
+        description: Date of invoice created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice updated in `Y-m-d H:i:s` format
+      tax_office:
+        type: object
+        description: Tax office assigned to company
+        properties:
+          data:
+            type: object
+            $ref: "#/definitions/TaxOffice"    
+            
+  TaxOffice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Tax office id
+      name:   
+        type: string
+        description: Tax office name
+      zip_code:   
+        type: string
+        description: Tax office zip code
+      city:   
+        type: string
+        description: Tax office city
+      street:   
+        type: string
+        description: Tax office street
+      number:   
+        type: string
+        description: Tax office street number
+      code:   
+        type: string
+        description: Tax office code                                        
+      created_at:
+        type: string
+        description: Date of tax office creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last tax office update in `Y-m-d H:i:s` format                       
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

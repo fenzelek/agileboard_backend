@@ -1,0 +1,204 @@
+swagger: '2.0'
+info:
+  title: ticket realization
+  description: List realization tickets on selected company.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /ticket-realization:
+    get:
+      summary: List realization tickets on selected company
+      description: |
+        List realization tickets on selected company. Client has no permission for this endpoint.
+      tags:
+        - ticket realization
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which user availability will be returned
+          required: true
+          type: string      
+        - name: from
+          in: query
+          description: Date in format `YYYY-mm-dd`. This is used for calculating period for which ticket ralizations will be returned. Be aware that calculated period may differ from given date, so you should use response dates (`date_start` and `date_end`) to be sure for which period ticket ralizations are returned
+          required: true
+          type: string
+        - name: limit
+          in: query
+          description: Number of days to get (default is `10`). If provided it should be `>0` and `<=31`
+          required: false
+          type: number
+          format: int
+      responses:
+        200:
+          description: Ticket realizations
+          schema: 
+              $ref: "#/definitions/SuccessTicketRealizationListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        
+                      
+definitions:
+  SuccessTicketRealizationListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Users with ticket realizations
+        items: 
+          $ref: "#/definitions/UserWithTicketRealizations"
+      date_start:          
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`
+      date_end:          
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`        
+
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+        
+        
+  UserWithTicketRealizations:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:   
+        type: string
+        description: User e-mail
+      first_name:   
+        type: string
+        description: User first name
+      last_name:   
+        type: string
+        description: User last name
+      role_id:   
+        type: number
+        format: int
+        description: User role id
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      ticket_realization:
+         $ref: "#/definitions/TicketRealizationStructure"         
+            
+  TicketRealizationStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Availability data
+        items: 
+            $ref: "#/definitions/TicketRealization"         
+    
+          
+  TicketRealization:
+    type: object
+    properties:
+      ticket_id:
+        type: number
+        format: int
+        description: Ticket id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      start_at:
+        type: string
+        description: Start time
+      end_at:
+        type: string
+        description: Stop time (can be null). If null then show only in start day.
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      ticket:
+         $ref: "#/definitions/TicketStructure"
+
+  TicketStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Availability data
+        items:
+            $ref: "#/definitions/Ticket"
+
+  Ticket:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      name:
+        type: string
+        description: Unique ticket name
+      title:
+        type: string
+        description: Title of ticket
+      project:
+        $ref: "#/definitions/ProjectStructure"
+
+  ProjectStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Availability data
+        items:
+            $ref: "#/definitions/Project"
+
+  Project:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      color:
+        type: string
+        description: Class name for bg and font color
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

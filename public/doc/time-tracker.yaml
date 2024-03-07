@@ -1,0 +1,413 @@
+swagger: '2.0'
+info:
+  title: Time Tracker
+  description: Time Tracker
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+
+# will be prefixed to all paths
+paths:
+  /time-tracker/add-frames:
+    post:
+      summary: Add time frames to time tracking
+      description:
+        Add time frames to time tracking
+      tags:
+        - TimeTracker
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: frames
+          in: body
+          description: Array of frames.
+          required: true
+          schema:
+              $ref: "#/definitions/FrameRecordsArray"
+      responses:
+        201:
+          description: Frame successfully added.
+          schema:
+            $ref: "#/definitions/TimeSummaryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /time-tracker/time-summary:
+    get:
+      summary: Get summary time from logged in user
+      description:
+        Get summary time from logged in user
+      tags:
+        - TimeTracker
+      parameters:
+        - name: time_zone_offset
+          in: query
+          description: Time zone offset.
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Time summary.
+          schema:
+            $ref: "#/definitions/TimeSummaryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /time-tracker/add-screenshots:
+    post:
+      summary: Send screenshot files to time frames
+      description:
+        Send screenshot files to time frames
+      tags:
+        - TimeTracker
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: project_id
+          type: integer
+          required: true
+          description: The id of the project
+        - in: formData
+          name: screen
+          type: file
+          required: true
+          description: Screenshot to time frames.
+        - in: formData
+          name: screen_id
+          type: string
+          required: true
+          description: Name of sceeen.
+      responses:
+        200:
+          description: Success.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        425:
+          description: Storage, save screen was fail.
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+  /time-tracker/screenshots:
+    get:
+      summary: Get screenshots for getting user
+      description:
+        Get screenshots for getting user, available for admin/owner
+      tags:
+        - TimeTracker
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: query
+          description: Filter by Project
+          required: false
+          type: integer
+        - in: query
+          name: date
+          type: string
+          required: true
+          description: Date for filter screenshots
+        - in: query
+          name: user_id
+          type: integer
+          required: true
+          description: User Identifier for filter screenshots
+      responses:
+        200:
+          description: Screenshots response.
+          schema:
+            $ref: "#/definitions/ScreenshotsResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /time-tracker/screenshots/own:
+    get:
+      summary: Get screenshots for logged user
+      description:
+        Get screenshots for logged user
+      tags:
+        - TimeTracker
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: query
+          description: Filter by Project
+          required: false
+          type: integer
+        - in: query
+          name: date
+          type: string
+          required: true
+          description: Date for filter screenshots
+        - in: query
+          name: user_id
+          type: integer
+          required: true
+          description: User Identifier for filter screenshots
+      responses:
+        200:
+          description: Screenshots response.
+          schema:
+            $ref: "#/definitions/ScreenshotsResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ScreenshotsResponse:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/Screenshots"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  Screenshots:
+    type: array
+    items:
+      $ref: "#/definitions/Screenshot"
+  Screenshot:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of activity
+      utc_started_at:
+        type: string
+        description: Date when this activity was started in UTC timezone (date in format `Y-m-d H:i:s`)
+      utc_finished_at:
+        type: string
+        description: Date when this activity was stopped in UTC timezone (date in format `Y-m-d H:i:s`)
+      tracked:
+        type: number
+        format: int
+        description: Time of this activity in seconds
+      activity:
+        type: number
+        format: int
+        description: Time of user activity in this activity in seconds
+      activity_level:
+        type: number
+        format: float
+        description: Activity level in this activity as percentage.
+      comment:
+        type: string
+        description: Comment (it's not time tracking comment)
+      project_name:
+        type: string
+        description: Project Name belongs to Activity
+      screens:
+        type: array
+        description: Array of screens
+        items:
+          $ref: "#/definitions/Screen"
+      ticket:
+        type: object
+        description: If no ticket asssigned `data` will be null
+        properties:
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  description: Ticket id
+                  type: integer
+                name:
+                  description: Ticket name
+                  type: string
+                title:
+                  description: Ticket title
+                  type: string
+
+  Screen:
+    type: object
+    properties:
+      thumb:
+        type: string
+        description: Small screen url
+      url:
+        type: string
+        description: Normal screen url
+
+  TimeSummaryResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          reject_frames:
+            type: array
+            description: Rejected Frames with long time
+            items:
+              $ref: "#/definitions/RejectedFrames"
+          companies:
+            description: Companies times
+            type: array
+            items:
+              type: number
+            $ref: "#/definitions/CompanyTimes"
+          projects:
+            description: Projects times
+            type: array
+            items:
+              type: number
+            $ref: "#/definitions/ProjectTimes"
+          tickets:
+            description: Tickets times
+            type: array
+            items:
+              type: number
+            $ref: "#/definitions/TicketTimes"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  FrameRecordsArray:
+    type: array
+    items:
+      $ref: "#/definitions/FrameRecord"
+
+  FrameRecord:
+    type: object
+    properties:
+      from:
+        description: Begin of the frame.
+        type: integer
+        example: 07-11-2021
+      to:
+        description: End of the frame.
+        type: string
+        example: 07-12-2021
+      companyId:
+        description: Company ID.
+        type: string
+      projectId:
+        description: Project ID.
+        type: integer
+      taskId:
+        description: Task ID.
+        type: integer
+      activity:
+        description: Activity as percent.
+        type: integer
+      gpsPosition:
+        description: Gps position.
+        type: array
+        items:
+          type: number
+        $ref: "#/definitions/Position"
+      screens:
+        type: array
+        items:
+          type: string
+          example: "12_123456789_1.jpeg"
+
+  Position:
+    properties:
+      latitude:
+        type: float
+      longitude:
+        type: float
+    example: latitude = 49.1234567, longitude = 47.1234567
+
+  CompanyTimes:
+    properties:
+      company_id:
+        type: integer
+        description: 600 sec
+
+  RejectedFrames:
+    properties:
+      from:
+        type: integer
+      to:
+        type: integer
+      companyId:
+        type: integer
+      projectId:
+        type: integer
+      activity:
+        type: integer
+      taskId:
+        type: integer
+
+  ProjectTimes:
+    properties:
+      company_id:project_id:
+        type: integer
+        description: 600 sec
+
+  TicketTimes:
+    properties:
+      company_id:project_id:tickets_id:
+        type: integer
+        description: 600 sec
+

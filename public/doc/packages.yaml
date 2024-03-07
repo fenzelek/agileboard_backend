@@ -1,0 +1,559 @@
+swagger: '2.0'
+info:
+  title: Packages
+  description: Actions packages
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+- http
+consumes:
+- application/json
+produces:
+- text/xml
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /packages:
+    get:
+      summary: Get list packages
+      description: Get list packages available in this system.
+      tags:
+      - Payments
+      parameters:
+      - name: selected_company_id
+        in: query
+        description: Current company id
+        required: true
+        type: integer
+      - name: currency
+        in: query
+        description: EUR or PLN (default PLN)
+        required: false
+        type: string
+      responses:
+        200:
+          description: Packages
+          schema:
+            $ref: "#/definitions/Packages"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Select package
+      description: Select package for buying
+      tags:
+      - Payments
+      parameters:
+      - name: selected_company_id
+        in: query
+        description: Current company id
+        required: true
+        type: integer
+      - name: package_id
+        in: formData
+        description: Package_id
+        required: true
+        type: integer
+      - name: days
+        in: formData
+        description: Days 0 (if change), 30, 365
+        required: true
+        type: integer
+      - name: is_test
+        in: formData
+        description: 0 - no test, 1 - test
+        required: true
+        type: integer
+      - name: currency
+        in: formData
+        description: currency PLN or EUR
+        required: true
+        type: string
+      - name: mod_price
+        in: body
+        description: List mod price
+        required: true
+        schema:
+          type: array
+          items:
+            $ref: "#/definitions/ModPricesItem"
+
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/SaveSuccess"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Wrong checksum or checsum expired etc. As code you will get `package.data_consistency_error`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+  /packages/current:
+    get:
+      summary: Get current package
+      description: Get current package.
+      tags:
+      - Payments
+      parameters:
+      - name: selected_company_id
+        in: query
+        description: Current company id
+        required: true
+        type: integer
+      responses:
+        200:
+          description: Package
+          schema:
+            $ref: "#/definitions/CurrentResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /packages/{id}:
+    get:
+      summary: Get current package
+      description: Get current package.
+      tags:
+      - Payments
+      parameters:
+      - name: id
+        in: path
+        description: package id
+        required: true
+        type: number
+        format: number
+      - name: selected_company_id
+        in: query
+        description: Current company id
+        required: true
+        type: integer
+      responses:
+        200:
+          description: Package
+          schema:
+            $ref: "#/definitions/ShowResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Resource has not been found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+definitions:
+
+  ModPricesItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Mod price id
+      checksum:
+        type: string
+        description: checksum
+
+  SaveSuccess:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Transaction
+        properties:
+          id:
+            type: number
+            format: int
+            description: Id
+          created_at:
+            type: string
+            description: Date of company creation in `Y-m-d H:i:s` format
+          updated_at:
+            type: string
+            description: Date of last compayny update in `Y-m-d H:i:s` format
+          payments:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/Payment"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Payment:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      transaction_id:
+        type: integer
+        description: Transaction id
+      subscription_id:
+        type: integer
+        description: Subscription id
+      price_total:
+        type: integer
+        description: Price total
+      currency:
+        type: integer
+        description: PLN or EUR
+      vat:
+        type: integer
+        description: VAT
+      external_order_id:
+        type: string
+        description: Order id from payu
+      status:
+        type: string
+        description: Status
+      type:
+        type: integer
+        description: 0-simply, 1-card
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+
+  Packages:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Package"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CurrentResponse:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/PackageWithModulesWithCompanyModules"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Package:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      default:
+        type: boolean
+        description: Is default package
+      portal_name:
+        type: string
+        description: Portal name
+      price:
+        type: number
+        format: int
+        description: price for default modules
+      days:
+        type: number
+        format: int
+        description: days for default modules
+
+  PackageWithModulesWithCompanyModules:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      default:
+        type: boolean
+        description: Is default package
+      portal_name:
+        type: string
+        description: Portal name
+      price:
+        type: number
+        format: int
+        description: price
+      days:
+        type: number
+        format: int
+        description: days - null if default
+      subscription:
+        $ref: "#/definitions/Subscription"
+      modules:
+        description: Modules
+        schema:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/definitions/ModuleWithCompanyModule"
+
+  ModuleWithCompanyModule:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      description:
+        type: string
+        description: Description
+      visible:
+        type: boolean
+        description: Show on list on page
+      available:
+        type: boolean
+        description: Is availeble in this time
+      mods_count:
+        type: number
+        format: int
+        description: Available mods count
+      company_module:
+        description: Modules
+        schema:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/definitions/CompanyModule"
+
+  CompanyModule:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      company_id:
+        type: number
+        format: int
+        description: Company id
+      module_id:
+        type: number
+        format: int
+        description: module id
+      value:
+        type: string
+        description: Name
+      package_id:
+        type: number
+        format: int
+        description: package_id
+      subscription_id:
+        type: number
+        format: int
+        description: package_id
+      expiration_date:
+        type: string
+        description: Date of expiration module in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+
+  ShowResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/ModuleWithMods"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ModuleWithMods:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      description:
+        type: string
+        description: Description
+      visible:
+        type: boolean
+        description: Show on list on page
+      available:
+        type: boolean
+        description: Is availeble in this time
+      mods:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/ModsWithModPrices"
+
+  ModsWithModPrices:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      module_id:
+        type: number
+        format: int
+        description: module id
+      test:
+        type: boolean
+        description: Is test mod
+      value:
+        type: string
+        description: Value
+      error:
+        type: string
+        description: Error value `free_package_now_used`, `module_mod_currently_used`, `module_mod_currently_used_can_extend`, `unavailable_value`, `waiting_for_payment`
+      mod_prices:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/ModPrices"
+
+  Subscription:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      company_module_id:
+        type: integer
+        description: Company module id
+      repeats:
+        type: integer
+        description: Count repeats
+      days:
+        type: integer
+        description: How many days of renewal
+      card_token:
+        type: integer
+        description: Card token
+
+  ModPrices:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      module_mod_id:
+        type: number
+        format: int
+        description: module mod id
+      package_id:
+        type: number
+        format: int
+        description: package id
+      days:
+        type: number
+        format: int
+        description: Days (0, 30, 365)
+      default:
+        type: boolean
+        description: Is default price
+      price:
+        type: number
+        format: int
+        description: Price for renew in 'grosz'
+      price_change:
+        type: number
+        format: int
+        description: Price for change in 'grosz'
+      currency:
+        type: string
+        description: PLN or EUR
+      checksum:
+        type: string
+        description: checksum (renew) for send when this price is selected or null when is error
+      checksum_change:
+        type: string
+        description: checksum (change) for send when this price is selected or null when is error
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

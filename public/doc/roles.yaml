@@ -1,0 +1,98 @@
+swagger: '2.0'
+info:
+  title: Roles
+  description: Display available system roles
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /roles:
+    get:
+      summary: Display list of roles
+      description: |
+        Displays list of available roles.
+      tags:
+        - Role
+      responses:
+        200:
+          description: Roles list
+          schema: 
+              $ref: "#/definitions/SuccessRolesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+  /roles/company:
+    get:
+      summary: Display list of roles
+      description: |
+        Displays list of available roles available for selected company.
+      tags:
+        - Role
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Roles list
+          schema:
+              $ref: "#/definitions/SuccessRolesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+
+definitions:
+  SuccessRolesIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Role"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  Role:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Role id
+      name:   
+        type: string
+        description: Role slug
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

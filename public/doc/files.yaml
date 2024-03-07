@@ -1,0 +1,963 @@
+swagger: '2.0'
+info:
+  title: Files
+  description: This section allow you to manage files in your project.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:     
+  /projects/{project}/files:
+    get:
+      summary: Display list files assigned to the project
+      description: |
+        Display list files assigned to the project
+      tags:
+        - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: fileable_type
+          in: query
+          description: The name of the resource for which we want to retrieve the list of assigned files. Allow parameters are `pages`, `stories`, `tickets` and `none`. If not sent, all the files from the project are taken.
+          type: string
+          required: false
+        - name: fileable_id
+          in: query
+          description: Resource ID for object of type given in `fileable_type` parameter. It will be used only when `fileable_type` parameter is not empty and it's different than `none`.
+          type: number
+          format: int
+          required: false
+        - name: search
+          in: query
+          description: Search for name and description
+          type: string
+          required: false
+        - name: file_type
+          in: query
+          description: Filter by types - images, pdf, documents, spreadsheets, other or get all with sending `none`
+          type: string
+          required: false
+      responses:
+        200:
+          description: List of files assigned to the project.
+          schema:
+              $ref: "#/definitions/FilesListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Assigned file to the project
+      description: |
+        Assigned file to the project
+      tags:
+        - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int     
+          required: true
+        - name: description
+          in: formData
+          description: Description file
+          type: string
+        - name: temp
+          in: formData
+          description: 0 or 1, (0 is default), 1 = temp file - delete after 1 hour
+          type: integer
+        - name: roles
+          type: array
+          description: User role ID with permission to file, when there is empty access have all the roles assigned to company
+          in: formData
+          items:
+            type: integer
+        - name: users
+          type: array
+          description: User ID with permission to file, when there is empty access have all users assigned to project
+          in: formData
+          items:
+            type: integer
+        - name: pages
+          type: array
+          description: Page ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+        - name: stories
+          type: array
+          description: Story ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+        - name: tickets
+          type: array
+          description: Ticket ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+        - name: file
+          in: formData
+          description: Uploaded file with a maximum size of 10MB
+          type: file
+          required: true
+      responses:
+        201:
+          description: File successfully added.
+          schema:
+              $ref: "#/definitions/StoreFileResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project}/files/{file}:
+    get:
+      summary: Display details of the file
+      description: Display details of the file
+      tags:
+      - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: file
+          in: path
+          description: File ID
+          type: number
+          format: int
+          required: true
+      responses:
+        200:
+          description: File successfully displayed.
+          schema:
+            $ref: "#/definitions/ShowFileResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Remove file from the project
+      description: Remove file from the project
+      tags:
+        - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: file
+          in: path
+          description: File ID
+          type: number
+          format: int
+          required: true
+      responses:
+        204:
+          description: File successfully deleted. No data will be passed.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update the file
+      description: Update the file
+      tags:
+        - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: file
+          in: path
+          description: File ID
+          type: number
+          format: int
+          required: true
+        - name: name
+          in: formData
+          description: Name file
+          type: string
+        - name: description
+          in: formData
+          description: Description file
+          type: string
+        - name: roles
+          type: array
+          description: User role ID with permission to file, when there is empty access have all the roles assigned to company
+          in: formData
+          items:
+            type: integer
+        - name: users
+          type: array
+          description: User ID with permission to file, when there is empty access have all users assigned to project
+          in: formData
+          items:
+            type: integer
+        - name: pages
+          type: array
+          description: Page ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+        - name: stories
+          type: array
+          description: Story ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+        - name: tickets
+          type: array
+          description: Ticket ID to be assigned to the file
+          in: formData
+          items:
+            type: integer
+      responses:
+        200:
+          description: File successfully update.
+          schema:
+              $ref: "#/definitions/UpdateFileResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project}/files/{file}/download:
+    get:
+      summary: Download the file assigned to the project.
+      description: |
+        Download the file assigned to the project.
+      tags:
+        - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: file
+          in: path
+          description: File ID
+          type: number
+          format: int
+          required: true
+        - name: width
+          in: query
+          description: For resize image (ratio)
+          type: number
+          format: int
+          required: false
+        - name: height
+          in: query
+          description: For resize image (ratio), if you send width then height is ignored
+          type: number
+          format: int
+          required: false
+
+      responses:
+        200:
+          description: File
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /projects/{project}/files/{file}/types:
+    get:
+      summary: Get lists types
+      description: Get lists types
+      tags:
+      - Files
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+      responses:
+        200:
+          description: File types successfully displayed.
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                description: Types
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+definitions:
+   
+
+  DataRole:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsRole"
+
+  DetailsRole:
+    type: object
+    properties:
+      id:
+        description: Role ID
+        type: integer
+      name:
+        description: Role name
+        type: string
+
+  ParameterUser:
+    type: object
+    properties:
+      id:
+        description: User ID
+        type: integer
+
+  DataUser:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsUser"
+
+  DetailsUser:
+    type: object
+    properties:
+      id:
+        description: User ID
+        type: string
+      email:
+        description: User email
+        type: string
+      first_name:
+        description: User name
+        type: string
+      last_name:
+        description: User surname
+        type: string
+      avatar:
+        description: User avatar
+        type: string
+
+  ParameterPage:
+    type: object
+    properties:
+      id:
+        description: Page ID
+        type: integer
+
+  DataPage:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsPage"
+
+  DetailsPage:
+    type: object
+    properties:
+      id:
+        description: Page ID
+        type: integer
+      name:
+        description: Page name
+        type: string
+
+  ParameterStory:
+    type: object
+    properties:
+      id:
+        description: Story ID
+        type: integer
+
+  DataStory:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsStory"
+
+  DetailsStory:
+    type: object
+    properties:
+      id:
+        description: Story ID
+        type: integer
+      name:
+        description: Story name
+        type: string
+
+  ParameterTicket:
+    type: object
+    properties:
+      id:
+        description: Ticket ID
+        type: integer
+
+  DataTicket:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsTicket"
+
+  DetailsTicket:
+    type: object
+    properties:
+      id:
+        description: Ticket ID
+        type: integer
+      name:
+        description: Ticket name
+        type: string
+      title:
+        description: Ticket title
+        type: string        
+        
+
+  FilesListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/FileWithOwner"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ShowFileResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: File details
+        properties:
+          id:
+            type: number
+            format: int
+            description: File ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          user_id:
+            type: number
+            format: int
+            description: User ID that added the file
+          name:
+            type: string
+            description: File original name
+          size:
+            type: number
+            format: int
+            description: File size
+          extension:
+            type: string
+            description: File extension
+          description:
+            type: string
+            description: File description
+          created_at:
+            type: string
+            description: Date and time when file was created in format `Y-m-d H:i:s`
+          updated_at:
+            type: string
+            description: Date and time when file was last updated in format `Y-m-d H:i:s`            
+          roles:
+            type: array
+            items:
+              $ref: "#/definitions/DataRole"
+          users:
+            type: array
+            items:
+              $ref: "#/definitions/DataUser"
+          pages:
+            type: array
+            items:
+              $ref: "#/definitions/DataPage"
+          stories:
+            type: array
+            items:
+              $ref: "#/definitions/DataStory"
+          tickets:
+            type: array
+            items:
+              $ref: "#/definitions/DataTicket"
+          owner:
+            $ref: "#/definitions/DataUser"              
+
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  File:
+    type: object
+    description: File details
+    properties:
+      id:
+        type: number
+        format: int
+        description: File ID
+      project_id:
+        type: number
+        format: int
+        description: Project ID
+      user_id:
+        type: number
+        format: int
+        description: The user ID that added the file
+      name:
+        type: string
+        description: File name
+      size:
+        type: number
+        format: int
+        description: File size
+      extension:
+        type: string
+        description: File extension
+      description:
+        type: string
+        description: File description
+      created_at:
+        type: string
+        description: Date and time when file was created in format `Y-m-d H:i:s`
+      updated_at:
+        type: string
+        description: Date and time when file was last updated in format `Y-m-d H:i:s`
+        
+  FileWithOwner:
+    type: object
+    description: File details
+    properties:
+      id:
+        type: number
+        format: int
+        description: File ID
+      project_id:
+        type: number
+        format: int
+        description: Project ID
+      user_id:
+        type: number
+        format: int
+        description: The user ID that added the file
+      name:
+        type: string
+        description: File name
+      size:
+        type: number
+        format: int
+        description: File size
+      extension:
+        type: string
+        description: File extension
+      description:
+        type: string
+        description: File description
+      created_at:
+        type: string
+        description: Date and time when file was created in format `Y-m-d H:i:s`
+      updated_at:
+        type: string
+        description: Date and time when file was last updated in format `Y-m-d H:i:s`        
+      owner:
+         $ref: "#/definitions/DataUser"
+
+  StoreFileResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: File details
+        properties:
+          id:
+            type: number
+            format: int
+            description: File ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          user_id:
+            type: number
+            format: int
+            description: User ID that added the file
+          name:
+            type: string
+            description: File original name
+          size:
+            type: number
+            format: int
+            description: File size
+          extension:
+            type: string
+            description: File extension
+          description:
+            type: string
+            description: File description
+          roles:
+            type: array
+            items:
+              $ref: "#/definitions/DataRole"
+          users:
+            type: array
+            items:
+              $ref: "#/definitions/DataUser"
+          pages:
+            type: array
+            items:
+              $ref: "#/definitions/DataPage"
+          stories:
+            type: array
+            items:
+              $ref: "#/definitions/DataStory"
+          tickets:
+            type: array
+            items:
+              $ref: "#/definitions/DataTicket"
+          created_at:
+            type: string
+            description: Date and time when file was created in format `Y-m-d H:i:s`
+          updated_at:
+            type: string
+            description: Date and time when file was last updated in format `Y-m-d H:i:s`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UpdateFileResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: File details
+        properties:
+          id:
+            type: number
+            format: int
+            description: File ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          user_id:
+            type: number
+            format: int
+            description: User ID that added the file
+          name:
+            type: string
+            description: File name set by the user
+          size:
+            type: number
+            format: int
+            description: File size in bytes
+          extension:
+            type: string
+            description: File extension
+          description:
+            type: string
+            description: File description
+          roles:
+            type: array
+            items:
+              $ref: "#/definitions/DataRole"
+          users:
+            type: array
+            items:
+              $ref: "#/definitions/DataUser"
+          pages:
+            type: array
+            items:
+              $ref: "#/definitions/DataPage"
+          stories:
+            type: array
+            items:
+              $ref: "#/definitions/DataStory"
+          tickets:
+            type: array
+            items:
+              $ref: "#/definitions/DataTicket"
+          created_at:
+            type: string
+            description: Date and time when file was created in format `Y-m-d H:i:s`
+          updated_at:
+            type: string
+            description: Date and time when file was last updated in format `Y-m-d H:i:s`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  StoreStoryResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Story details
+        properties:
+          id:
+            type: number
+            format: int
+            description: Story ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          name:
+            type: string
+            description: Story name
+          color:
+            type: string
+            description: Story color (hex)
+          priority:
+            type: number
+            format: int
+            description: Story priority
+          created_at:
+            type: string
+            description: Date and time when story was created in format `Y-m-d H:i:s`
+          updated_at:
+            type: string
+            description: Date and time when story was last updated in format `Y-m-d H:i:s`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  ProjectResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Project details
+        properties:          
+          id:
+            type: number
+            format: int
+            description: Project id
+          company_id:   
+            type: number
+            format: int
+            description: Company id
+          name:   
+            type: string
+            description: Project name
+          short_name:   
+            type: string
+            description: Project short name
+          closed_at:   
+            type: string
+            description: Time when project was closedin format `YYYY-mm-dd`
+          created_at:   
+            type: string
+            description: Time when project was created in format `YYYY-mm-dd`
+          updated_at:   
+            type: string
+            description: Time when project was last updated in format `YYYY-mm-dd`
+          deleted_at:   
+            type: string
+            description: Time when project was deleted in format `YYYY-mm-dd`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time 
+
+  ProjectsListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Projects"  
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"   
+      exec_time:
+        type: number
+        format: float
+        description: API execution time    
+
+  Projects:
+    type: object
+    description: Project details
+    properties:          
+      id:
+        type: number
+        format: int
+        description: Project id
+      company_id:   
+        type: number
+        format: int
+        description: Company id
+      name:   
+        type: string
+        description: Project name
+      short_name:   
+        type: string
+        description: Project short name
+      closed_at:   
+        type: string
+        description: Time when project was closedin format `YYYY-mm-dd`
+      created_at:   
+        type: string
+        description: Time when project was created in format `YYYY-mm-dd`
+      updated_at:   
+        type: string
+        description: Time when project was last updated in format `YYYY-mm-dd`
+      deleted_at:   
+        type: string
+        description: Time when project was deleted in format `YYYY-mm-dd`
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

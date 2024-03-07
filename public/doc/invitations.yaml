@@ -1,0 +1,382 @@
+swagger: '2.0'
+info:
+  title: Invitations
+  description: Display and manage companies invitations
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /companies/{companyId}/invitations:
+    post:
+      summary: Add new invitation / Add new User
+      description: |
+        Invite user to company (Invitation mode, `general.invite.enabled` application setting set on true in database). Only allowed users are allowed to create invitations. After this action notification will be send to invited user and invited user should click the link and decide whether they want to accept or reject this invitation.
+        /Add user to company (No invitation mode, `general.invite.enabled` application setting set on false in database). Add user to company.
+      tags:
+        - Invitation / Add user
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of currently selected company
+          required: true
+          type: string        
+        - name: companyId
+          in: path
+          description: Company id where user will be invited. It should be exact same as `selected_company_id` parameter
+          required: true
+          type: string      
+        - name: email
+          in: formData
+          description: Invited user e-mail (unique for no invitation mode)
+          required: true
+          type: string
+        - name: first_name
+          in: formData
+          description: Invited user first name (might be empty)
+          required: true
+          type: string
+        - name: last_name
+          in: formData
+          description: Invited user last name (might be empty)
+          required: true
+          type: string
+        - name: password
+          in: formData
+          description: user password (only for no invitation mode)
+          required: true
+          type: string
+        - name: password_confimation
+          in: formData
+          description: Confimation user password (only for no invitation mode)
+          required: true
+          type: string
+        - name: role_id
+          in: formData
+          description: Invited user role in company (it cannot be set to Owner)
+          required: true
+          type: string
+        - name: url
+          in: formData
+          description: Url in frontend where invitation action will be made. It should contain `:email` and `:token` strings and they will be replaced with invited user e-mail and invitation token (only for invitation mode)
+          required: true
+          type: string
+        - name: language
+          in: formData
+          description: Language for sending email
+          required: false
+          type: string
+      responses:
+        200 only to distinguish with invitation mode:
+          description: User was succesfully saved (200 only to distinguish with invitation mode)
+          schema:
+              $ref: "#/definitions/UserCreatedResponse"
+        201:
+          description: Invitation was succesfully saved
+          schema: 
+              $ref: "#/definitions/InvitationCreatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: User who should be invited is already assigned to this company. As code you will get `company_invitation.already_assigned_to_company`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                                       
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+              
+  /companies/invitations/reject:
+    put:
+      summary: Reject invitation
+      description: |
+        Reject invitation to company. It does not require Authorization.
+      tags:
+        - Invitation
+      parameters:     
+        - name: token
+          in: formData
+          description: Invitation token
+          required: true
+          type: string                                                             
+      responses:
+        200:
+          description: Invitation was succesfully saved
+          schema: 
+              $ref: "#/definitions/InvitationRejectedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Invitation is not pending (was probably expired) - as code you will get `company_invitation.not_pending` or invitation is already expired - as code you will get `company_invitation.expired`  
+          schema: 
+              $ref: "#/definitions/ErrorResponse" 
+                                                               
+  /companies/invitations/accept:
+    put:
+      summary: Accept invitation
+      description: |
+        Accept invitation to company. It does not require Authorization. To know whether account already exists you may send this request with `email` only. If in validation fields you will get `password` it means, that no account exists yet and you need to request user for `password`.
+      tags:
+        - Invitation
+      parameters:     
+        - name: token
+          in: formData
+          description: Invitation token
+          required: true
+          type: string     
+        - name: email
+          in: formData
+          description: Invited user e-mail
+          required: true
+          type: string   
+        - name: password
+          in: formData
+          description: Not empty if user does not exist yet
+          required: true
+          type: string     
+        - name: password_confirmation
+          in: formData
+          description: Not empty if `password` is required and should have same value
+          required: true
+          type: string
+        - name: language
+          in: formData
+          description: Language for sending email
+          required: false
+          type: string
+      responses:
+        200:
+          description: Invitation was succesfully saved
+          schema: 
+              $ref: "#/definitions/InvitationAcceptedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Invitation is not pending (was probably expired) - as code you will get `company_invitation.not_pending`, invitation is already expired - as code you will get `company_invitation.expired`, e-mail given is not the same as set in invitation - as code you will get `company_invitation.invalid_email_given` or user is already assigned to this company - as code you will get `company_invitation.already_assigned_to_company`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"  
+                                                                             
+  /users/current/invitations:
+    get:
+      summary: Display current user invitations
+      description: |
+        Displays current user pending invitations. At the moment it will return both expired and not-expired invitations
+      tags:
+        - Invitation 
+        - User
+      parameters:
+        - name: active
+          in: path
+          description: If passed returns only non-expired invitations. Accepts only value `1`.
+          type: integer
+      responses:
+        200:
+          description: Current user pending invitations
+          schema: 
+              $ref: "#/definitions/SuccessUserInvitationsResponse"
+        401:
+          description: User has no access to display this page. It probably means that he's not logged in.
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                                                                               
+                      
+definitions:
+  InvitationCreatedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array  
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+        
+  InvitationRejectedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array  
+      exec_time:
+        type: number
+        format: float
+        description: API execution time       
+         
+  InvitationAcceptedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array  
+      exec_time:
+        type: number
+        format: float
+        description: API execution time            
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time
+
+  SuccessUserInvitationsResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Invitation"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+        
+  Invitation:
+    type: object
+    properties:
+      token:              
+        type: string        
+        description: Invitation token (it has to be used to approve or reject invitation)       
+      email:              
+        type: string        
+        description: Invited user e-mail         
+      inviting_user_id:              
+        type: number
+        format: int
+        description: Id of user who created this invitation            
+      company_id:              
+        type: number
+        format: int
+        description: Company id
+      expiration_time:              
+        type: string
+        description: When this invitation expire (date in format `Y-m-d H:i:s` UTC)       
+      first_name:              
+        type: string
+        description: User first name
+      last_name:              
+        type: string
+        description: User last name                   
+      role_id:              
+        type: number
+        format: int
+        description: Role id
+      title:              
+        type: string
+        description: User's title displayed for this company              
+      status:              
+        type: number
+        format: int
+        description: Invitation status (0 - pending, 1 - approved, 2 - rejected, 4 - deleted)
+      created_at:              
+        type: string
+        description: Date of invitation creation (date in format `Y-m-d H:i:s` UTC)                                
+      role: 
+        $ref: "#/definitions/RoleStructure"        
+      company: 
+        $ref: "#/definitions/CompanyStructure"
+                 
+  RoleStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Role data
+        items: 
+            $ref: "#/definitions/Role"          
+                  
+  Role:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Role id
+      name:   
+        type: string
+        description: Role slug                 
+     
+  CompanyStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Company data
+        items: 
+            $ref: "#/definitions/Company"          
+                  
+  Company:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company id
+      name:   
+        type: string
+        description: Company name
+
+  UserCreatedResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/UserCreated"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UserCreated:
+   type: object
+   properties:
+     id:
+       type: integer
+       description: Added User id
+     email:
+       type: string
+       description: Add user e-mail
+     first_name:
+       type: string
+       description: User first name
+     last_name:
+       type: string
+       description: User last name
+     avatar:
+       type: string
+       description: User avatar
+     activated:
+       type: boolean
+       description: Activation stage
+     deleted:
+       type: boolean
+       description: Activation stage

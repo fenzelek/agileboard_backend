@@ -1,0 +1,96 @@
+swagger: '2.0'
+info:
+  title: Tax offices
+  description: Display available tax offices
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /tax-offices:
+    get:
+      summary: Display list of tax offices
+      description: |
+        Displays list of available tax offices.
+      tags:
+        - Tax office
+      responses:
+        200:
+          description: Tax offices list
+          schema: 
+              $ref: "#/definitions/SuccessTaxOfficesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessTaxOfficesIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TaxOffice"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  TaxOffice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Tax office id
+      name:   
+        type: string
+        description: Tax office name
+      zip_code:   
+        type: string
+        description: Tax office zip code
+      city:   
+        type: string
+        description: Tax office city
+      street:   
+        type: string
+        description: Tax office street
+      number:   
+        type: string
+        description: Tax office street number
+      code:   
+        type: string
+        description: Tax office code                                        
+      created_at:
+        type: string
+        description: Date of tax office creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last tax office update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

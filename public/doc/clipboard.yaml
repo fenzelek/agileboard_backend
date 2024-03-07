@@ -1,0 +1,92 @@
+swagger: '2.0'
+info:
+  title: Clipboard
+  description: Display available Clipboard
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /clipboard:
+    get:
+      summary: Display list of Clipboard
+      description: |
+        Displays list of available Clipboard items
+      tags:
+        - Clipboard
+      responses:
+        200:
+          description: Clipboard Index
+          schema: 
+              $ref: "#/definitions/ClipboardIndex"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+  /clipboard/{id}:
+    get:
+      summary: Download Clipboard File
+      description: |
+        Downlaod Clipboard
+      tags:
+        - Clipboard
+      responses:
+        200:
+          description: Clipboard File
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: User has no access to display this page. As code you will get `clipboard.no_found_file`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ClipboardIndex:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Clipboard"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  Clipboard:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Clipboard id
+      file_name:
+        type: string
+        description: File Name
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

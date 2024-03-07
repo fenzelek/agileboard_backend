@@ -1,0 +1,1627 @@
+swagger: '2.0'
+info:
+  title: Ticekts
+  description: Display and manage ticekts
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /projects/{project_id}/tickets:
+    get:
+      summary: List tickets
+      description: |
+        List ticekts.
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: query
+          description: Id of sprint
+          required: false
+          type: integer
+        - name: story_id
+          in: query
+          description: Id of story
+          required: false
+          type: integer
+        - name: story_ids
+          in: query
+          description: Ids of stories
+          required: false
+          type: array
+          items:
+            type: integer
+        - name: hidden
+          in: query
+          description: Get only not hidden records
+          required: false
+          type: boolean
+        - name: search
+          in: query
+          description: Name or title of tickets. Partial match will be done if given
+          type: string
+          required: false
+      responses:
+        200:
+          description: List of tickets
+          schema:
+              $ref: "#/definitions/TicketIndexResponse"
+        210:
+          description: List of tickets with pagination (response code 200)
+          schema:
+              $ref: "#/definitions/TicketIndexPaginationResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Create a ticket
+      description: |
+        Create a ticket
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project_id
+          in: path
+          description: Project ID
+          type: integer
+          required: true
+        - name: name
+          in: body
+          description: The name of the ticket.
+          type: string
+          required: true
+        - name: parent_ticket_ids
+          in: body
+          description: Array of parent tickets ids.
+          type: array
+          items:
+            type: integer
+          required: false
+        - name: sub_ticket_ids
+          in: body
+          description: Array of sub tickets ids.
+          type: array
+          items:
+            type: integer
+          required: false
+        - name: sprint_id
+          type: integer
+          description: Sprint id
+          in: body
+          required: false
+        - name: type_id
+          type: integer
+          description: Type ticket id
+          in: body
+          required: true
+        - name: assigned_id
+          type: integer
+          description: Id user who is assigned to ticket
+          in: body
+          required: false
+        - name: reporter_id
+          type: integer
+          description: Id user who added ticket
+          in: body
+          required: false
+        - name: description
+          in: body
+          description: Description - max 30000 chars
+          type: string
+          required: false
+        - name: estimate_time
+          type: number
+          format: int
+          description: Estimate time in seconds
+          in: body
+          required: true
+        - name: scheduled_time_start
+          in: body
+          description: Scheduled datatime start in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: scheduled_time_end
+          in: body
+          description: Scheduled datatime end in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: story_id
+          type: array
+          description: Story ids
+          in: body
+          items:
+            type: integer
+        - name: involved_ids
+          in: body
+          description: Array of users ids to be involved with knowledge page.
+          type: array
+          items:
+            type: integer
+        - name: interactions
+          description: New interactions in ticket
+          required: false
+          in: body
+          schema:
+            $ref: "#/definitions/Interaction"
+      responses:
+        201:
+          description: Ticket successfully added.
+          schema:
+              $ref: "#/definitions/TicketStoryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: No statuses created for project yet. As code you will get `project.no_statuses_created`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/tickets/{ticket_id}:
+    get:
+      summary: Show ticket
+      description: |
+        Show ticket. For non-client `time_tracking_summary` data will be present, for client it won't be present at all.
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Show ticket
+          schema:
+              $ref: "#/definitions/TicketShowResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    put:
+      summary: Update a ticket
+      description: |
+        Update a ticket
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project_id
+          in: path
+          description: Project ID
+          type: integer
+          required: true
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+        - name: name
+          in: body
+          description: The name of the ticket.
+          type: string
+          required: true
+        - name: parent_ticket_ids
+          in: body
+          description: Array of parent tickets ids.
+          type: array
+          items:
+            type: integer
+          required: false
+        - name: sub_ticket_ids
+          in: body
+          description: Array of sub tickets ids.
+          type: array
+          items:
+            type: integer
+          required: false
+        - name: sprint_id
+          type: integer
+          description: Sprint id
+          in: body
+          required: false
+        - name: type_id
+          type: integer
+          description: Type ticket id
+          in: body
+          required: true
+        - name: assigned_id
+          type: integer
+          description: Id user who is assigned to ticket
+          in: body
+          required: false
+        - name: reporter_id
+          type: integer
+          description: Id user who added ticket
+          in: body
+          required: false
+        - name: description
+          in: body
+          description: Description - max 30000 chars
+          type: string
+          required: false
+        - name: estimate_time
+          type: integer
+          description: Estimate time in seconds
+          in: body
+          required: true
+        - name: scheduled_time_start
+          in: body
+          description: Scheduled datatime start in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: scheduled_time_end
+          in: body
+          description: Scheduled datatime end in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: story_id
+          type: array
+          description: Story ids
+          in: body
+          items:
+            type: integer
+        - name: involved_ids
+          in: body
+          description: Array of users ids to be involved with knowledge page.
+          type: array
+          items:
+            type: integer
+        - name: interactions
+          description: New interactions in ticket
+          required: false
+          in: body
+          schema:
+            $ref: "#/definitions/Interaction"
+      responses:
+        200:
+          description: Ticket successfully added.
+          schema:
+              $ref: "#/definitions/TicketUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    delete:
+      summary: Delete ticket
+      description: |
+        Delete ticket.
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+      responses:
+        204:
+          description: Ticket was succesfully deleted
+          schema:
+              $ref: "#/definitions/TicketDeletedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Sprint has tickets. As code you will get `sprint.not_empty`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+
+  /projects/{project_id}/tickets/{ticket_id}/show:
+    put:
+      summary: Set hidden field to false
+      description: |
+        Set hidden field to false
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+              $ref: "#/definitions/TicketShowStatusResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/tickets/{ticket_id}/hide:
+    put:
+      summary: Set hidden field to true
+      description: |
+        Set hidden field to true
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+              $ref: "#/definitions/TicketHideResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/tickets/{ticket_id}/change-priority:
+    put:
+      summary: Change priority ticket
+      description: |
+        Change priority  sprint.
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+        - name: before_ticket_id
+          in: formData
+          description: Ticket will be moved into priority of given ticket id (if `null` then first in sprint or first in all not closed)
+          required: true
+          type: integer
+        - name: status_id
+          in: formData
+          description: Move ticket to this status.
+          required: false
+          type: integer
+        - name: sprint_id
+          in: formData
+          description: Move ticket to this sprint.
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+              $ref: "#/definitions/TicketChangePriorityResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/comment:
+    post:
+      summary: Create a ticket comment
+      description: |
+        Create a ticket comment
+      tags:
+        - Ticket comments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project_id
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: text
+          in: formData
+          description: Text - max 10000 chars
+          type: string
+          required: true
+        - name: ticket_id
+          type: number
+          format: int
+          description: Ticket id
+          in: formData
+          required: false
+        - name: interactions
+          description: New interactions in ticket comment
+          required: false
+          in: body
+          schema:
+            $ref: "#/definitions/Interaction"
+
+      responses:
+        201:
+          description: Ticket comment successfully added.
+          schema:
+              $ref: "#/definitions/TicketCommentStoryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/comment/{comment_id}:
+    put:
+      summary: Update a ticket comment
+      description: |
+        Update a ticket comment
+      tags:
+        - Ticket comments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project_id
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: comment_id
+          in: path
+          description: Current ticket comment id
+          required: true
+          type: integer
+        - name: text - max 10000 chars
+          in: formData
+          description: Text
+          type: string
+          required: true
+        - name: interactions
+          description: New interactions in ticket comment
+          required: false
+          in: body
+          schema:
+            $ref: "#/definitions/Interaction"
+      responses:
+        200:
+          description: Ticket comment successfully updated.
+          schema:
+              $ref: "#/definitions/TicketCommentUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Delete ticket comment
+      description: |
+        Delete ticket comment.
+      tags:
+        - Ticket comments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: comment_id
+          in: path
+          description: Current ticket comment id
+          required: true
+          type: integer
+      responses:
+        204:
+          description: Ticket comment was succesfully deleted
+          schema:
+              $ref: "#/definitions/TicketCommentDeletedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/tickets/{ticket_id}/history:
+    get:
+      summary: List ticket history
+      description: |
+        List ticket history.
+      tags:
+        - Ticket history
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: ticket_id
+          in: path
+          description: Current ticket id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: List of tickets
+          schema:
+              $ref: "#/definitions/TicketHistoryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  Interaction:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InteractionPing"
+
+  InteractionPing:
+    type: object
+    properties:
+      recipient_id:
+        description: Recipient ID
+        type: number
+        format: int
+      ref:
+        description: Reference anchor
+        type: string
+      notifiable:
+        description: Notifiable
+        type: string
+        enum:
+          - GROUP
+          - USER
+      message:
+        description: Message
+        type: string
+
+  TicketIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TicketWithTimeTrackingGeneralSummary"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  TicketIndexPaginationResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TicketWithTimeTrackingGeneralSummary"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  TicketChangePriorityResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Ticket"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketShowResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/TicketWithRelations"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketStoryResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Ticket"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketUpdateResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Ticket"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketShowStatusResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Ticket"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketHideResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Ticket"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketDeletedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketCommentStoryResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Comment"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketCommentUpdateResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Comment"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketCommentDeletedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketHistoryResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TicketHistory"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Ticket:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      sprint_id:
+        type: number
+        format: int
+        description: Sprint id
+      status_id:
+        type: number
+        format: int
+        description: Status id
+      name:
+        type: string
+        description: Unique ticket name
+      title:
+        type: string
+        description: Title of ticket
+      type_id:
+        type: number
+        format: int
+        description: Type id
+      assigned_id:
+        type: number
+        format: int
+        description: Id user who is assigned to ticket
+      reporter_id:
+        type: number
+        format: int
+        description: Id user who added ticket
+      description:
+        type: string
+        description: Description
+      estimate_time:
+        type: number
+        format: int
+        description: Estimate time in seconds
+      scheduled_time_start:
+        type: number
+        format: int
+        description: Scheduled datatime start in format Y-m-d H:i:s
+      scheduled_time_end:
+        type: number
+        format: int
+        description: Scheduled datatime end in format Y-m-d H:i:s
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      hidden:
+        type: boolean
+        description: Marking hidden tickets
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+
+
+  TicketWithTimeTrackingGeneralSummary:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      sprint_id:
+        type: number
+        format: int
+        description: Sprint id
+      sprint_name:
+        type: string
+        format: string
+        description: Sprint name
+      status_id:
+        type: number
+        format: int
+        description: Status id
+      name:
+        type: string
+        description: Unique ticket name
+      title:
+        type: string
+        description: Title of ticket
+      type_id:
+        type: number
+        format: int
+        description: Type id
+      assigned_id:
+        type: number
+        format: int
+        description: Id user who is assigned to ticket
+      reporter_id:
+        type: number
+        format: int
+        description: Id user who added ticket
+      description:
+        type: string
+        description: Description
+      estimate_time:
+        type: number
+        format: int
+        description: Estimate time in seconds
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      hidden:
+        type: boolean
+        description: Marking hidden tickets
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      stories:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Related files
+            items:
+                $ref: "#/definitions/Story"
+      stats:
+        type: object
+        description: Ticket stats
+        properties:
+          data:
+            type: object
+            properties:
+              tracked_summary:
+                type: number
+                format: int
+                description: Time in seconds of all tracked activities in this sprint
+              activity_summary:
+                type: number
+                format: int
+                description: Time in seconds of all users activities for  activities in this sprint
+              activity_level:
+                type: number
+                format: int
+                description: Users activity level in percentage
+              time_usage:
+                type: number
+                format: int
+                description: Amount of used estimated time (in percentage)
+
+  TicketWithRelations:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      sprint_id:
+        type: number
+        format: int
+        description: Sprint id
+      status_id:
+        type: number
+        format: int
+        description: Status id
+      parent_ticket_ids:
+        type: array
+        items:
+          type: integer
+        format: int
+        description: Array of parent ids
+      sub_ticket_ids:
+        type: array
+        items:
+          type: integer
+        format: int
+        description: Array of sub ticket ids
+      name:
+        type: string
+        description: Unique ticket name
+      title:
+        type: string
+        description: Title of ticket
+      type_id:
+        type: number
+        format: int
+        description: Type id
+      assigned_id:
+        type: number
+        format: int
+        description: Id user who is assigned to ticket
+      reporter_id:
+        type: number
+        format: int
+        description: Id user who added ticket
+      description:
+        type: string
+        description: Description
+      estimate_time:
+        type: number
+        format: int
+        description: Estimate time in seconds
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      hidden:
+        type: boolean
+        description: Marking hidden tickets
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted contractor update in `Y-m-d H:i:s` format
+      parent_tickets:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Parent tickets
+            items:
+              $ref: "#/definitions/Ticket"
+      sub_tickets:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Parent tickets
+            items:
+              $ref: "#/definitions/Ticket"
+      files:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Related files
+            items:
+                $ref: "#/definitions/File"
+      stories:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Related files
+            items:
+                $ref: "#/definitions/Story"
+      sprint:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/Sprint"
+      type:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/Type"
+      status:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/Status"
+      comments:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Related comments
+            items:
+              $ref: "#/definitions/CommentWithUser"
+      assigned_user:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/User"
+      reporting_user:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/User"
+      time_tracking_summary:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/TimeTrackingSummary"
+      stats:
+        type: object
+        description: Ticket stats
+        properties:
+          data:
+            type: object
+            properties:
+              tracked_summary:
+                type: number
+                format: int
+                description: Time in seconds of all tracked activities in this sprint
+              activity_summary:
+                type: number
+                format: int
+                description: Time in seconds of all users activities for  activities in this sprint
+              activity_level:
+                type: number
+                format: int
+                description: Users activity level in percentage
+              time_usage:
+                type: number
+                format: int
+                description: Amount of used estimated time (in percentage)
+      involved:
+        type: object
+        properties:
+          data:
+            type: array
+            description: Involved users
+            items:
+              $ref: "#/definitions/Involved"
+
+
+  TimeTrackingSummary:
+    type: object
+    description: Time tracking summary details
+    properties:
+      time_tracking_user_id:
+        type: number
+        format: int
+        description: Id of record containing external system user (this is not user id in this application)
+      user_id:
+        type: number
+        format: int
+        description: Id of user in system. If no matching found it will be null. In such case also `user` won't contain any data in `data` key
+      ticket_id:
+        type: number
+        format: int
+        description: Ticket id
+      tracked_sum:
+        type: number
+        format: int
+        description: Summary of tracked time in seconds for time_tracking_user_id
+      activity_sum:
+        type: number
+        format: int
+        description: Summary of activity time in seconds for time_tracking_user_id
+      activity_level:
+        type: number
+        description: Get activity level for summaried activities (as percentage)
+      user:
+        type: object
+        description: Matched user. If no match was found `data` will hold `null` instead of array
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+      time_tracking_user:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/TimeTrackingUser"
+
+  File:
+    type: object
+    description: File details
+    properties:
+      id:
+        type: number
+        format: int
+        description: File ID
+      project_id:
+        type: number
+        format: int
+        description: Project ID
+      user_id:
+        type: number
+        format: int
+        description: The user ID that added the file
+      owner:
+        type: object
+        properties:
+          data:
+            type: array
+            description: File owner
+            items:
+              $ref: "#/definitions/User"
+      name:
+        type: string
+        description: File name
+      size:
+        type: number
+        format: int
+        description: File size
+      extension:
+        type: string
+        description: File extension
+      description:
+        type: string
+        description: File description
+      created_at:
+        type: string
+        description: Date and time when file was created in format `Y-m-d H:i:s`
+      updated_at:
+        type: string
+        description: Date and time when file was last updated in format `Y-m-d H:i:s`
+
+  Story:
+    type: object
+    description: Story details
+    properties:
+      id:
+        type: number
+        format: int
+        description: Story ID
+      project_id:
+        type: number
+        format: int
+        description: Project ID
+      name:
+        type: string
+        description: Story name
+      color:
+        type: string
+        description: Story color (hex)
+      priority:
+        type: number
+        format: int
+        description: Story priority
+      created_at:
+        type: string
+        description: Date and time when story was created in format `Y-m-d H:i:s`
+      updated_at:
+        type: string
+        description: Date and time when story was last updated in format `Y-m-d H:i:s`
+
+  Involved:
+    type: object
+    description: Involved users details
+    properties:
+      user_id:
+        type: integer
+        description: Involved user ID
+      first_name:
+        type: string
+        description: Involved user first name
+      last_name:
+        type: string
+        description: Involved user last name
+      avatar:
+        type: string
+        description: Involved user avatar-file url
+
+  Sprint:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Sprint id
+      name:
+        type: string
+        description: Sprint name
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      status:
+        type: string
+        description: inactive/active/closed
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+  Type:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Type id
+      name:
+        type: string
+        description: Type name
+  Status:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Status id
+      name:
+        type: string
+        description: Status name
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+
+  Comment:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Comment id
+      text:
+        type: string
+        description: Text
+      ticket_id:
+        type: number
+        format: int
+        description: Ticket id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+
+  CommentWithUser:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Comment id
+      text:
+        type: string
+        description: Text
+      ticket_id:
+        type: number
+        format: int
+        description: Ticket id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      status:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/User"
+
+  TicketHistory:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      resource_id:
+        type: number
+        format: int
+        description: Resource id (for example ticket id)
+      object_id:
+        type: number
+        format: int
+        description: Object id  (for example ticket_comment id)
+      field_id:
+        type: number
+        format: int
+        description: history_field id
+      value_before:
+        type: string
+        description: Value before changes
+      label_before:
+        type: string
+        description: Label before changes
+      value_after:
+        type: string
+        description: Value after changes
+      label_after:
+        type: string
+        description: Label after changes
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      user:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/User"
+      field:
+        type: object
+        properties:
+          data:
+              $ref: "#/definitions/HistoryField"
+
+  HistoryField:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: History field id
+      object_type:
+        type: string
+        description: Type object for example ticket
+      field_name:
+        type: string
+        description: field name for example story_id
+
+  User:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User e-mail
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated
+
+  TimeTrackingUser:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Time tracking user id
+      integration_id:
+        type: number
+        format: int
+        description: Id of integration
+      user_id:
+         type: number
+         format: int
+         description: User id (it might be null if user was not matched yet)
+      external_user_id:
+        type: string
+        description: Id of user in external system
+      external_user_email:
+        type: string
+        description: User e-mail in external system
+      external_user_name:
+        type: string
+        description: User name in external system
+      created_at:
+        type: string
+        description: Date of time tracking user record creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last tracking user record update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)

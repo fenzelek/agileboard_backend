@@ -1,0 +1,295 @@
+swagger: '2.0'
+info:
+  title: Company tokens
+  description: Display and manage company tokens
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /companies/tokens:
+    get:
+      summary: Get company tokens
+      description: |
+        Retrieve all company API tokens. Action available only for company owner and administrator.
+      tags:
+        - Token
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Company for which tokens will be returned
+          required: true
+          type: string             
+        - name: user_id
+          in: query
+          description: User id for which tokens will be returned
+          required: false
+          type: string        
+      responses:
+        200:
+          description: List of company tokens
+          schema:
+              $ref: "#/definitions/CompanyTokenIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Create new token for user in selected company
+      description: |
+        Create new token for user in selected company. Action available only for company owner and administrator.
+      tags:
+        - Token        
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Company for which tokens will be returned
+          required: true
+          type: string        
+        - name: user_id
+          in: formData
+          description: Id of user for which this token will be created. This user has to be assigned to selected company with approved status
+          required: true
+          type: integer
+        - name: role_id
+          in: formData
+          description: Id of role that will be assigned for user using this token. At the moment you are allowed to pass only id of API role here
+          required: true
+          type: integer  
+        - name: domain
+          in: formData
+          description: Id of host that will be used for connections from external API. It should match host that will be sent in headers. If set to empty, no host restrictions will be used
+          required: true
+          type: string
+        - name: ip_from
+          in: formData
+          description: Starting IP of host that will be used for connections from external API. It should match IP that will be sent in headers. If set to empty, no IP restrictions will be used. If given only ip_from this single IP will be allowed. If you want to use IP range, both ip_from and ip_to should be filled
+          required: true
+          type: string   
+        - name: ip_to
+          in: formData
+          description: Ending IP of host that will be used for connections from external API. See ip_from description for details
+          required: true
+          type: string            
+        - name: ttl
+          in: formData
+          description: Time to live of encrypted token in minutes. Minimum 1, maximum 1440. Reasonable value should be set here considering server differences.
+          required: true
+          type: integer
+      responses:
+        201:
+          description: Token was succesfully saved
+          schema:
+              $ref: "#/definitions/TokenSavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/tokens/{id}:
+    delete:
+      summary: Soft delete token of user
+      description: |
+        Soft deletes token. Allowed only for company owner and administrator.
+      tags:
+        - Token
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Token id
+          required: true
+          type: number
+      responses:
+        200:
+          description: Empty array
+          schema:
+              $ref: "#/definitions/TokenRemoveResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"              
+
+
+
+definitions:
+  TokenSavedResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/CompanyToken"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+
+  CompanyTokenIndexResponse:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/definitions/CompanyTokenWithRole"
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  TokenRemoveResponse:
+        type: object
+
+        properties:
+          data:
+            type: string
+            description: It will be empty array
+          exec_time:
+            type: number
+            format: float
+            description: API execution time
+
+  CompanyToken:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Token id
+      company_id:
+        type: number
+        format: int
+        description: Company id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      role_id:
+        type: number
+        format: int
+        description: Role id      
+      api_token:
+        type: string
+        description: Token value to be used by external API
+      domain:
+        type: string
+        description: Allowed domain to use this API token
+      ip_from:
+        type: string
+        description: Starting IP range that is allowed to use this API token
+      ip_to:
+        type: string
+        description: Ending IP range that is allowed to use this API token        
+      ttl:
+        type: number
+        format: int
+        description: Number of minutes this token after modifications is considered valid
+      created_at:
+        type: string
+        description: When this token was created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: When this token was updated in `Y-m-d H:i:s` format    
+            
+  CompanyTokenWithRole:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Token id
+      company_id:
+        type: number
+        format: int
+        description: Company id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      role_id:
+        type: number
+        format: int
+        description: Role id      
+      api_token:
+        type: string
+        description: Token value to be used by external API
+      domain:
+        type: string
+        description: Allowed domain to use this API token
+      ip_from:
+        type: string
+        description: Starting IP range that is allowed to use this API token
+      ip_to:
+        type: string
+        description: Ending IP range that is allowed to use this API token        
+      ttl:
+        type: number
+        format: int
+        description: Number of minutes this token after modifications is considered valid
+      created_at:
+        type: string
+        description: When this token was created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: When this token was updated in `Y-m-d H:i:s` format   
+      role:
+          $ref: "#/definitions/RoleStructure"                      
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+        
+  RoleStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Role data
+        items: 
+            $ref: "#/definitions/Role"          
+                  
+  Role:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Role id
+      name:   
+        type: string
+        description: Role slug
+      detault:   
+        type: int
+        description: Whether this role should be copied when creating new companies          
+                

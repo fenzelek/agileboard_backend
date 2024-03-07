@@ -1,0 +1,78 @@
+swagger: '2.0'
+info:
+  title: Invoice Reverse Charges
+  description: Display available Invoice Reverse Charges
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-reverse-charges:
+    get:
+      summary: Display list of invoice reverse charges
+      description: |
+        Displays list of available invoice reverse charges.
+      tags:
+        - Invoice Reverse Charges
+      responses:
+        200:
+          description: Invoice Reverse Charges list
+          schema: 
+              $ref: "#/definitions/SuccessInvoiceReverseChargesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessInvoiceReverseChargesIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceReverseCharge"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  InvoiceReverseCharge:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Invoice Reverse Charge id
+      slug:
+        type: string
+        description: Invoice Reverse Charge slug
+      description:
+        type: string
+        description: Invoice Reverse Charge Description
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

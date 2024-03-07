@@ -1,0 +1,292 @@
+swagger: '2.0'
+info:
+  title: Integrations
+  description: Manage integrations
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /user/notifications:
+    get:
+      summary: Get list user of notifications.
+      description: |
+        This action is allowed for auth user. 
+        Remember that the data format of the "data" field depends on the value of the "type" field.
+        Currently, we will only have this one type equals to interaction, 
+        but this implementation leaves the possibility to simply implement another kinds of notifications.
+      tags:
+        - Notifications
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: false
+          type: integer
+        - name: read
+          in: query
+          description: Show only read/not read notifications
+          required: false
+          type: boolean
+        - name: page
+          in: query
+          description: Notification page number
+          required: false
+          type: integer
+      responses:
+        200:
+          description: List of notifications
+          schema:
+            $ref: "#/definitions/NotificationsList"
+        401:
+          description: User is not logged in
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /user/notifications/unread-count:
+    get:
+      summary: Get count of unread notifications in selected company
+      description: |
+        This action is allowed for auth user
+      tags:
+        - Notifications
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Response with count of unread notifications
+          schema:
+            $ref: "#/definitions/NotificationsUnreadCountResponse"
+        401:
+          description: User is not logged in
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /user/notifications/read:
+    put:
+      summary: Read selected notification ids in company
+      description: |
+        This action is allowed for auth user
+      tags:
+        - Notifications
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: notification_ids
+          in: body
+          required: true
+          schema:
+            type: array
+            description: Notification ids
+            items:
+              type: string
+      responses:
+        200:
+          description: Empty response
+        400:
+          description: Message describing problems with invalid notification ids
+          schema:
+            $ref: "#/definitions/ReadNotificationFailResponse"
+        401:
+          description: User is not logged in
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /user/notifications/read-all:
+    put:
+      summary: Read all user notifications in selected company
+      description: |
+        This action is allowed for auth user
+      tags:
+        - Notifications
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Empty response
+        400:
+          description: Message describing problems with invalid notification ids
+          schema:
+            $ref: "#/definitions/ReadNotificationFailResponse"
+        401:
+          description: User is not logged in
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ReadNotificationFailResponse:
+    type: object
+    properties:
+      message:
+        type: string
+        description: Fail reason
+      errors:
+        type: object
+        properties:
+          invalid_notification_ids:
+            type: array
+            description: Id of invalid notifications
+            items:
+              type: integer
+    required:
+      - message
+      - errors
+
+  NotificationsUnreadCountResponse:
+    type: object
+    properties:
+      count:
+        type: integer
+        description: Count of unread notifications
+    required:
+      - count
+
+  NotificationsList:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Notification"
+      current_page:
+        type: integer
+        description: Current page number
+      per_page:
+        type: integer
+        description: Items per page
+    required:
+      - data
+      - current_page
+      - per_page
+
+  Notification:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Uuid of notification
+      type:
+        type: string
+        enum:
+          - interaction
+        description: Type of notification. This type decides about data property format
+      read_at:
+        type: string
+        description: Notification read_at date, when notification is not read it has null value
+      company_id:
+        type: integer
+        description: Notification company id
+      data:
+        allOf:
+          - $ref: '#/definitions/InteractionNotification'
+    required:
+      - id
+      - type
+      - read_at
+      - data
+
+  InteractionNotification:
+    type: object
+    properties:
+      title:
+        type: string
+        description: Notification title. For example when source type is ticket. Title is ticket name
+      author_name:
+        type: string
+        description: Interaction author name
+      event_type:
+        type: string
+        description: Type of event which was trigger to interaction. For example(new comment, comment edited)
+        enum:
+          - ticket_new
+          - ticket_edit
+          - ticket_comment_new
+          - ticket_comment_edit
+          - document_new
+          - document_edit
+          - document_comment_new
+          - document_comment_edit
+      action_type:
+        type: string
+        description: Type of action which interaction relates to. For example(ping in content, added to task involved)
+        enum:
+          - ping
+      source_type:
+        type: string
+        description: Source of interaction. For example(ticket comment, ticket)
+        enum:
+          - tickets
+          - ticket_comments
+          - knowledge_pages
+          - knowledge_page_comments
+      source_properties:
+        type: array
+        description: List of context properties. It can be null when source is not found(for example when source(ticket,comment) was deleted
+        items:
+          properties:
+            type:
+              type: string
+              enum:
+                - ticket
+                - ticket_comment
+                - knowledge_page
+                - knowledge_page_comment
+              description: Source property type
+            id:
+              type: string
+              description: Source property id. Represent id of the model depending on source property type
+          required:
+            - type
+            - id
+
+      ref:
+        type: string
+        description: Reference provided from frontend to navigate to proper comment/document.
+      message:
+        type: string
+        description: Fragment of a comment/post related to interaction. It helps user get more context.
+    required:
+      - project_id
+      - title
+      - author_name
+      - event_type
+      - action_type
+      - source_type
+      - source_properties
+      - link
+      - ref
+      - message
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

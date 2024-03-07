@@ -1,0 +1,430 @@
+swagger: '2.0'
+info:
+  title: Online Sales
+  description: Display online sales.
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /online-sales:
+    get:
+      summary: Retrieve all online sales
+      description: |
+        Retrieve all online sales to dedicate company.
+      tags:
+        - OnlineSales
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which online sales are retrieved
+          required: true
+          type: integer
+        - name: email
+          in: query
+          description: Customer email
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: transaction_number
+          in: query
+          description: Unique online sale number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the online sale use for searching
+          required: false
+          type: string
+        - name: no_inovice
+          in: query
+          description: If parameter set to `1`, would be retieved the sales only if no issue any invice (default retrieving all)
+          required: false
+          type: boolean
+        - name: year
+          in: query
+          description: Year of sale use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: OnlineSales list
+          schema:
+              $ref: "#/definitions/OnlineSalesRetrievedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /online-sales/pdf:
+    get:
+      summary: Retrieve all online sales and return pdf
+      description: |
+        Retrieve all online sales to dedicate company and return pdf.
+      tags:
+        - OnlineSales
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which online sales are retrieved
+          required: true
+          type: integer
+        - name: email
+          in: query
+          description: Customer email
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: transaction_number
+          in: query
+          description: Unique online sale number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the online sale use for searching
+          required: false
+          type: string
+        - name: no_inovice
+          in: query
+          description: If parameter set to `1`, would be retieved the sales only if no issue any invice (default retrieving all)
+          required: false
+          type: boolean
+        - name: year
+          in: query
+          description: Year of sale use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale use for filter
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Pdf file
+          schema:
+            type: file
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /online-sales/{id}:
+    get:
+      summary: Retrieve online sale with query id
+      description: |
+        Retrieve full OnlineSale with all items and all invoices.
+      tags:
+        - OnlineSales
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which online sale is retrieved
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: OnlineSale id
+          required: true
+          type: integer
+
+      responses:
+        200:
+          description: OnlineSale item
+          schema:
+              $ref: "#/definitions/FullOnlineSaleResponse"
+        404:
+          description: OnlineSale is not found.
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+definitions:
+  OnlineSalesRetrievedResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/OnlineSale"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  OnlineSale:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: OnlineSale id
+      number:
+        type: integer
+        description: OnlineSale number
+      transaction_number:
+        type: string
+        description: Unique online sale number
+      email:
+        type: string
+        description: Customer email
+      company_id:
+        type: integer
+        description: Id company, to which online sale was added
+      sale_date:
+        type: string
+        description: Date of issue the online sale (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: OnlineSale net price
+      price_gross:
+        type: number
+        description: OnlineSale gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      created_at:
+        type: string
+        description: Date of online sale creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last online sale update in `Y-m-d H:i:s` format
+      invoices:
+        type: array
+        description: List of invoice issued to online sale
+        items:
+          $ref: "#/definitions/ShortInvoice"
+
+  ShortInvoice:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceItem"
+
+  InvoiceItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+
+  FullOnlineSaleResponse:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: OnlineSale id
+      number:
+        type: integer
+        description: OnlineSale number
+      transaction_number:
+        type: string
+        description: Unique online sale number
+      email:
+        type: string
+        description: Customer email
+      company_id:
+        type: integer
+        description: Id company, to which online sale was added
+      sale_date:
+        type: string
+        description: Date of issue the online sale (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: OnlineSale net price
+      price_gross:
+        type: number
+        description: OnlineSale gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      created_at:
+        type: string
+        description: Date of online sale creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last online sale update in `Y-m-d H:i:s` format
+      items:
+        type: array
+        description: List of items to online sale
+        items:
+          $ref: "#/definitions/OnlineSaleItems"
+      invoices:
+        type: array
+        description: List of invoice issued to online sale
+        items:
+          $ref: "#/definitions/ShortInvoice"
+
+  OnlineSaleItems:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/OnlineSaleItem"
+
+  OnlineSaleItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: OnlineSale item id
+      online_sale_id:
+        type: integer
+        description: OnlineSale id
+      company_service_id:
+        type: integer
+        description: Company service id
+      name:
+        type: string
+        description: Company service name
+      price_net:
+        type: number
+        format: float
+        description: OnlineSale item net price
+      price_net_sum:
+        type: number
+        format: float
+        description: Sum online sale item net price
+      price_gross:
+        type: number
+        format: float
+        description: OnlineSale item gross price
+      price_gross_sum:
+        type: number
+        format: float
+        description: Sum online sale item gross price
+      vat_rate:
+        type: string
+        description: OnlineSale item tax name
+      vat_rate_id:
+        type: number
+        description: OnlineSale item tax id
+      vat_sum:
+        type: number
+        format: float
+        description: OnlineSale item tax amount
+      quantity:
+        type: number
+        description: OnlineSale item quantity
+      created_at:
+        type: string
+        description: Date of online sale item creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last online sale item update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+   type: object
+   properties:
+    total:
+      type: number
+      format: integer
+      description: Total number of results
+    count:
+      type: number
+      format: integer
+      description: Number of returned results
+    per_page:
+      type: number
+      format: integer
+      description: Number of results per page
+    current_page:
+      type: number
+      format: integer
+      description: Number of current page
+    total_pages:
+     type: number
+     format: integer
+     description: Total number of pages
+    links:
+     $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)

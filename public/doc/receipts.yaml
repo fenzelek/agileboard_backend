@@ -1,0 +1,453 @@
+swagger: '2.0'
+info:
+  title: Receipts
+  description: Display receipts.
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /receipts:
+    get:
+      summary: Retrieve all receipts
+      description: |
+        Retrieve all receipts to dedicate company.
+      tags:
+        - Receipts
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add receipt
+          required: false
+          type: integer
+        - name: date_start
+          in: query
+          description: Start date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: payment_method_id
+          in: query
+          description: Method of payment use for filter
+          required: false
+          type: integer
+        - name: transaction_number
+          in: query
+          description: Unique receipt number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the receipt use for searching
+          required: false
+          type: string
+        - name: no_inovice
+          in: query
+          description: If parameter set to `1`, would be retieved the receipts only if no issue any invice (default retrieving all)
+          required: false
+          type: boolean
+        - name: year
+          in: query
+          description: Year of sale use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Receipts list
+          schema:
+              $ref: "#/definitions/ReceiptsRetrievedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /receipts/pdf:
+    get:
+      summary: Retrieve all receipts and return pdf
+      description: |
+        Retrieve all receipts to dedicate company and return pdf.
+      tags:
+        - Receipts
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add receipt
+          required: false
+          type: integer
+        - name: date_start
+          in: query
+          description: Start date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: payment_method_id
+          in: query
+          description: Method of payment use for filter
+          required: false
+          type: integer
+        - name: transaction_number
+          in: query
+          description: Unique receipt number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the receipt use for searching
+          required: false
+          type: string
+        - name: no_inovice
+          in: query
+          description: If parameter set to `1`, would be retieved the receipts only if no issue any invice (default retrieving all)
+          required: false
+          type: boolean
+        - name: year
+          in: query
+          description: Year of sale use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Pdf file
+          schema:
+            type: file
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /receipts/{id}:
+    get:
+      summary: Retrieve receipt with query id
+      description: |
+        Retrieve full receipts with all items and all invoices.
+      tags:
+        - Receipts
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipt is retrieved
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Receipt id
+          required: true
+          type: integer
+
+      responses:
+        200:
+          description: Receipt item
+          schema:
+              $ref: "#/definitions/FullReceiptResponse"
+        404:
+          description: Reicept is not found.
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  ReceiptsRetrievedResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Receipt"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  Receipt:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt id
+      number:
+        type: integer
+        description: Receipt number
+      transaction_number:
+        type: string
+        description: Unique receipt number
+      user_id:
+        type: integer
+        description: Id user who added receipt
+      company_id:
+        type: integer
+        description: Id company, to which receipt was added
+      sale_date:
+        type: string
+        description: Date of issue the receipt (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: Receipt net price
+      price_gross:
+        type: number
+        description: Receipt gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      cash_back:
+        type: number
+        description: Cash back amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      created_at:
+        type: string
+        description: Date of receipt creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last receipt update in `Y-m-d H:i:s` format
+      invoices:
+        type: array
+        description: List of invoice issued to receipt
+        items:
+          $ref: "#/definitions/ShortInvoice"
+
+  ShortInvoice:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceItem"
+
+  InvoiceItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+
+  FullReceiptResponse:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt id
+      number:
+        type: integer
+        description: Receipt number
+      transaction_number:
+        type: string
+        description: Unique receipt number
+      user_id:
+        type: integer
+        description: Id user who added receipt
+      company_id:
+        type: integer
+        description: Id company, to which receipt was added
+      sale_date:
+        type: string
+        description: Date of issue the receipt (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: Receipt net price
+      price_gross:
+        type: number
+        description: Receipt gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      created_at:
+        type: string
+        description: Date of receipt creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last receipt update in `Y-m-d H:i:s` format
+      items:
+        type: array
+        description: List of items to receipt
+        items:
+          $ref: "#/definitions/ReceiptItems"
+      invoices:
+        type: array
+        description: List of invoice issued to receipt
+        items:
+          $ref: "#/definitions/ShortInvoice"
+
+  ReceiptItems:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/ReceiptItem"
+
+  ReceiptItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt item id
+      receipt_id:
+        type: integer
+        description: Receipt id
+      company_service_id:
+        type: integer
+        description: Company service id
+      name:
+        type: string
+        description: Company service name
+      price_net:
+        type: number
+        format: float
+        description: Receipt item net price
+      price_net_sum:
+        type: number
+        format: float
+        description: Sum receipt item net price
+      price_gross:
+        type: number
+        format: float
+        description: Receipt item gross price
+      price_gross_sum:
+        type: number
+        format: float
+        description: Sum receipt item gross price
+      vat_rate:
+        type: string
+        description: Receipt item tax name
+      vat_rate_id:
+        type: number
+        description: Receipt item tax id
+      vat_sum:
+        type: number
+        format: float
+        description: Receipt item tax amount
+      quantity:
+        type: number
+        description: Receipt item quantity
+      creator_id:
+        type: integer
+        description: Id user who added receipt item
+      editor_id:
+        type: integer
+        description: Id user who edit receipt item
+      created_at:
+        type: string
+        description: Date of receipt item creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last receipt item update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+   type: object
+   properties:
+    total:
+      type: number
+      format: integer
+      description: Total number of results
+    count:
+      type: number
+      format: integer
+      description: Number of returned results
+    per_page:
+      type: number
+      format: integer
+      description: Number of results per page
+    current_page:
+      type: number
+      format: integer
+      description: Number of current page
+    total_pages:
+     type: number
+     format: integer
+     description: Total number of pages
+    links:
+     $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)

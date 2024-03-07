@@ -1,0 +1,77 @@
+swagger: '2.0'
+info:
+  title: Vat Release Reasons
+  description: Display available Vat Release Reason
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /vat-release-reasons:
+    get:
+      summary: Display list of vat release reasons
+      description: |
+        Displays list of available vat release reason
+      tags:
+        - Vat Release Reasons
+      responses:
+        200:
+          description: Vat Release Reason Index
+          schema: 
+              $ref: "#/definitions/VatReleaseReasonsIndex"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  VatReleaseReasonsIndex:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/VatReleaseReason"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  VatReleaseReason:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Vat Release Reason id
+      slug:
+        type: string
+        description: Vat Release Reason slug
+      description:
+        type: string
+        description: Vat Release Reason description
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

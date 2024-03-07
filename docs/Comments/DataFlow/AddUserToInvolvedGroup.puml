@@ -1,0 +1,12 @@
+@startuml
+title Add user to group 'Involved' to Task/Document \n
+
+start
+
+:Add User to Task/Document ;
+:Add_new_notification ;
+note: You have been added to 'Document/Task'
+
+stop
+
+@enduml

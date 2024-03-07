@@ -1,0 +1,81 @@
+swagger: '2.0'
+info:
+  title: CreateInvoice formats
+  description: Display available invoice formats
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-formats:
+    get:
+      summary: Display list of invoice formats
+      description: |
+        Displays list of available invoice formats.
+      tags:
+        - CreateInvoice format
+      responses:
+        200:
+          description: CreateInvoice formats list
+          schema: 
+              $ref: "#/definitions/SuccessInvoiceFormatsIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessInvoiceFormatsIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceFormat"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  InvoiceFormat:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice format id
+      name:   
+        type: string
+        description: CreateInvoice format name
+      format:
+        type: string
+        description: CreateInvoice format
+      example:
+        type: string
+        description: CreateInvoice format example
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

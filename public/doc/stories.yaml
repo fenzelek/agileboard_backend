@@ -1,0 +1,469 @@
+swagger: '2.0'
+info:
+  title: Stories
+  description: This section allow you to manage story in your project.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:     
+  /projects/{project}/stories:  
+    get:
+      summary: List of stories
+      description: |
+         Get list of stories assigned to project
+      tags:
+        - Stories
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: name
+          in: query
+          description: The name of the story. If given, it will search stories containing given string in name
+          type: string
+          required: false
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `name`, `priority`, `created_at`, `updated_at`), Example=id,-name
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: Number of page 
+          required: false
+          type: int     
+        - name: limit
+          in: query
+          description: Number of results per page 
+          required: false
+          type: int                
+          
+      responses:
+        200:
+          description: List of stories.
+          schema:
+              $ref: "#/definitions/StoryList"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"  
+  
+    post:
+      summary: Create a story
+      description: |
+        Create a story
+      tags:
+        - Stories
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: name
+          in: formData
+          description: The name of the story. It must be unique within the project and can have a maximum of 255 characters.
+          type: string
+          required: true
+        - name: color
+          in: formData
+          description: The color of the story (hex).
+          type: string
+          required: true
+        - name: files
+          type: array
+          description: File ID to be added to the story. It can be empty array 
+          in: formData
+          required: true
+          items:
+            type: integer
+        - name: tickets
+          type: array
+          description: Ticket ID to be added to the story. It can be empty array 
+          in: formData
+          required: true
+          items:
+            type: integer
+        - name: knowledge_pages
+          type: array
+          description: Knowledge page ids to be added to the story. It can be empty array 
+          in: formData
+          required: true
+          items:
+            type: integer           
+      responses:
+        201:
+          description: Story successfully added.
+          schema:
+              $ref: "#/definitions/StoryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project}/stories/{story}:
+    get:
+      summary: Get given story
+      description: |
+       Get information about story
+      tags:
+        - Stories
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: story
+          in: path
+          description: Story ID
+          type: number
+          format: int
+          required: true        
+      responses:        
+          201:
+            description: Story successfully added.
+            schema:
+                $ref: "#/definitions/StoryResponse"
+          401:
+            description: User has no access to display this page. As code you will get `general.no_action_permission`
+            schema:
+                $ref: "#/definitions/ErrorResponse"        
+  
+    put:
+      summary: Update the story
+      description: |
+        Update the story
+      tags:
+        - Stories
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: story
+          in: path
+          description: Story ID
+          type: number
+          format: int
+          required: true
+        - name: color
+          in: formData
+          description: The color of the story (hex).
+          type: string
+          required: true
+        - name: name
+          in: formData
+          description: The name of the story. It must be unique within the project and can have a maximum of 255 characters.
+          type: string
+          required: true
+        - name: priority
+          in: formData
+          description: Priority number of the story. It must be unique within the project.
+          type: number
+          format: int
+          required: true
+        - name: files
+          type: array
+          description: File ID to be added to the story. Empty array - delete all relations. Null or not set - no changes.
+          in: formData
+          required: false
+          items:
+            type: integer
+        - name: tickets
+          type: array
+          description: Ticket ID to be added to the story. Empty array - delete all relations. Null or not set - no changes.
+          in: formData
+          required: false
+          items:
+            type: integer
+        - name: knowledge_pages
+          type: array
+          description: Knowledge page ids to be added to the story. Empty array - delete all relations. Null or not set - no changes.
+          in: formData
+          required: false
+          items:
+            type: integer     
+      responses:
+        201:
+          description: Story successfully update.
+          schema:
+              $ref: "#/definitions/StoryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    delete:
+      summary: Delete a story
+      description: |
+        Delete a story
+      tags:
+        - Stories
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: The ID of the company to which the project is assigned
+          type: string
+          required: true
+        - name: project
+          in: path
+          description: Project ID
+          type: number
+          format: int
+          required: true
+        - name: story
+          in: path
+          description: Story ID
+          type: number
+          format: int
+          required: true
+      responses:
+        204:
+          description: Story successfully deleted.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  StoryResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Story details
+        properties:
+          id:
+            type: number
+            format: int
+            description: Story ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          name:
+            type: string
+            description: Story name
+          color:
+            type: string
+            description: Story color (hex)
+          priority:
+            type: number
+            format: int
+            description: Story priority
+          created_at:
+            type: string
+            description: Date and time when story was created in format `Y-m-d H:i:s`
+          updated_at:
+            type: string
+            description: Date and time when story was last updated in format `Y-m-d H:i:s`
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time
+
+  DataFile:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsFile"
+
+  DetailsFile:
+    type: object
+    properties:
+      id:
+        description: File ID
+        type: integer
+      user_id:
+        description: User ID that added the file
+        type: integer
+      name:
+        description: File name
+        type: string
+      size:
+        description: File size
+        type: integer
+      extension:
+        type: string
+        description: File extension
+      description:
+        type: string
+        description: File description
+      created_at:
+        type: string
+        description: Date and time when file was created in format `Y-m-d H:i:s`
+      updated_at:
+        type: string
+        description: Date and time when file was last updated in format `Y-m-d H:i:s`
+
+  DataTicket:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DetailsTicket"
+
+  DetailsTicket:
+    type: object
+    properties:
+      id:
+        description: Ticket ID
+        type: integer
+      name:
+        description: Ticket name
+        type: string
+        
+  StoryList:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Story"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time        
+        
+        
+  Story:
+    type: object
+    properties:
+      data:
+        type: object
+        description: Story details
+        properties:
+          id:
+            type: number
+            format: int
+            description: Story ID
+          project_id:
+            type: number
+            format: int
+            description: Project ID
+          name:
+            type: string
+            description: Story name
+          priority:
+            type: number
+            format: int
+            description: Story priority          
+          created_at:
+            type: string
+            description: Date of story creation in `Y-m-d H:i:s` format
+          updated_at:
+            type: string
+            description: Date of last story update in `Y-m-d H:i:s` format
+          deleted_at:
+            type: string
+            description: Date of story removal in `Y-m-d H:i:s` format                        
+  Pagination:
+   type: object
+   properties:
+    total:
+      type: number
+      format: integer
+      description: Total number of results
+    count:
+      type: number
+      format: integer
+      description: Number of returned results
+    per_page:
+      type: number
+      format: integer
+      description: Number of results per page
+    current_page:
+      type: number
+      format: integer
+      description: Number of current page
+    total_pages:
+     type: number
+     format: integer
+     description: Total number of pages
+    links:
+     $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)            

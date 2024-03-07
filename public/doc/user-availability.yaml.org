@@ -1,0 +1,262 @@
+swagger: '2.0'
+info:
+  title: User availability
+  description: This section allow you to manage declared availability by users.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /users/availabilities:
+    get:
+      summary: Display user availability in selected period
+      description: |
+        Display user availability in selected period of time. For admin availability of all users (except deleted) will be returned but for other users it will be limited to users that are assigned to same projects (and are not deleted)
+      tags:
+        - User availability         
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which user availability will be returned
+          required: true
+          type: string      
+        - name: from
+          in: query
+          description: Date in format `YYYY-mm-dd`. This is used for calculating period for which availabilities will be returned. Be aware that calculated period may differ from given date, so you should use response dates (`date_start` and `date_end`) to be sure for which period availabilities are returned
+          required: true
+          type: string
+        - name: limit
+          in: query
+          description: Number of days to get (default is `10`). If provided it should be `>0` and `<=31`
+          required: false
+          type: number
+          format: int
+      responses:
+        200:
+          description: User availabilities
+          schema: 
+              $ref: "#/definitions/SuccessAvailabilityListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"     
+  /users/{userId}/availabilities/{day}:                       
+    get:
+      summary: Get user availability for selected day
+      description: |
+          Display user availability for selected user in selected day
+      tags:
+        - User availability         
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which user availability will be returned
+          required: true
+          type: string      
+        - name: userId
+          in: path
+          description: User id
+          required: true
+          type: number
+          format: int
+        - name: day
+          in: path
+          description: Date in format `YYYY-mm-dd`.
+          required: true
+          type: string
+      responses:
+        200:
+          description: List of user availabilities
+          schema: 
+              $ref: "#/definitions/UserAvailabilitiesResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse" 
+    post:
+      summary: Set user availability for selected day
+      description: |
+          Set user availability for selected user in selected day. This action will remove all user availability first and then will set it again based on given data
+      tags:
+        - User availability         
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which user availability will be created
+          required: true
+          type: string      
+        - name: userId
+          in: path
+          description: User id
+          required: true
+          type: number
+          format: int
+        - name: day
+          in: path
+          description: Date in format `YYYY-mm-dd`.
+          required: true
+          type: string
+        - name: availabilities
+          in: body
+          schema: 
+            type: array
+            description: User availabilities. If you want to remove all user availabilities, send it as empty array
+            items: 
+              $ref: "#/definitions/UserDayAvailabilityPartial"
+          
+      responses:
+        201:
+          description: User availabilities successfully saved
+          schema: 
+              $ref: "#/definitions/UserAvailabilitiesResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"                           
+        
+                      
+definitions:
+  SuccessAvailabilityListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Users with availabilities
+        items: 
+          $ref: "#/definitions/UserWithAvailabilities"
+      date_start:          
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`
+      date_end:          
+        type: string
+        description: Start date of availabilities in format `YYYY-mmm-dd`        
+
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+        
+        
+  UserWithAvailabilities:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:   
+        type: string
+        description: User e-mail
+      first_name:   
+        type: string
+        description: User first name
+      last_name:   
+        type: string
+        description: User last name
+      role_id:   
+        type: number
+        format: int
+        description: User role id
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      availabilities:
+         $ref: "#/definitions/AvailabilityStructure"         
+            
+  AvailabilityStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Availability data
+        items: 
+            $ref: "#/definitions/UserDayAvailability"         
+    
+          
+  UserDayAvailability:
+    type: object
+    properties:
+      day:
+        type: string
+        description: Date in format `YYYY-mm-dd`    
+      time_start:
+        type: string
+        description: Start time (can be null)
+      time_stop:
+        type: string
+        description: Stop time (can be null)        
+      available:
+        type: boolean
+        description: Whether user is available in given time (or date if times are empty) or not
+      description:
+        type: string
+        description: Optional description for this entry
+        
+  UserDayAvailabilityPartial:
+    type: object
+    properties:
+      time_start:
+        type: string
+        description: Start time (can be null)
+      time_stop:
+        type: string
+        description: Stop time (can be null)        
+      available:
+        type: boolean
+        description: Whether user is available in given time (or date if times are empty) or not
+      description:
+        type: string
+        description: Optional description for this entry        
+        
+  UserAvailabilitiesResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        description: User availabilities
+        items:
+          $ref: "#/definitions/UserDayAvailability"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time       
+        
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

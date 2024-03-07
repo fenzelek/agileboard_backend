@@ -1,0 +1,731 @@
+swagger: '2.0'
+info:
+  title: Payments
+  description: Actions connected to payu
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - text/xml  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /companies/payments:
+    get:
+      summary: Get list payments
+      description: |
+        Get list payments.
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: status
+          in: query
+          description: Current company id
+          required: false
+          type: string
+      responses:
+        200:
+          description: List cards
+          schema:
+              $ref: "#/definitions/PaymentList"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/payments/cards:
+    get:
+      summary: Get list credit cards
+      description: |
+        Get list credit cards.
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: List payments
+          schema:
+              $ref: "#/definitions/SuccessListCards"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Some error. As code you will get `payu.technical_problems`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/payments/{payment_id}:
+    get:
+      summary: Get selected payment
+      description: |
+        Get selected payment.
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: payment_id
+          in: path
+          description: Payment id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: List cards
+          schema:
+              $ref: "#/definitions/Payment"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Payment not exist. As code you will get `general.no_resource_found`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Create order in payu
+      description: |
+        Confirm buy. Create order in payu.
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: payment_id
+          in: path
+          description: Payment id (only in status BEFORE_START)
+          required: true
+          type: integer
+        - name: subscription
+          in: formData
+          description: Set is subscription or simply payment
+          required: true
+          type: bool
+        - name: type
+          in: formData
+          description: Simple - 0, card -1, default simple
+          required: false
+          type: integer
+        - name: token
+          in: formData
+          description: Token - selected card
+          required: false
+          type: string
+        - name: card_exp_month
+          in: formData
+          description: New card - expired month - length 2 - required when there is no token
+          required: false
+          type: string
+        - name: card_exp_year
+          in: formData
+          description: New card - expired year - length 4 - required when there is no token
+          required: false
+          type: string
+        - name: card_cvv
+          in: formData
+          description: New card - cvv key - length 3 - required when there is no token
+          required: false
+          type: string
+        - name: card_number
+          in: formData
+          description: New card - card number - length 12-19 - required when there is no token
+          required: false
+          type: string
+
+      responses:
+        200:
+          description: Payments created
+          schema:
+              $ref: "#/definitions/SuccessConfirmPayment"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Payment not exist. As code you will get `general.no_resource_found`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: 3ds weryfication `payu.warning_continue_3ds` (with redirect_url, as 200), cvv weryfication `payu.warning_continue_cvv`, technical problem `payu.technical_problems`, other error `payu.some_error`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Cancel payment
+      description: |
+         Cancel payment
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: payment_id
+          in: path
+          description: payment id
+          required: true
+          type: number
+      responses:
+        200:
+          schema:
+              $ref: "#/definitions/SuccessCancelPayment"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Payment not exist. As code you will get `general.no_resource_found`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        409:
+          description: some error `payu.some_error`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/payments/again/{transaction_id}:
+    post:
+      summary: Create payment again
+      description: |
+        Create payment from other payment without request to payu.
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: transaction_id
+          in: path
+          description: Transaction id (only with payment statuses CANCELED)
+          required: true
+          type: integer
+
+      responses:
+        200:
+          description: Payments created
+          schema:
+              $ref: "#/definitions/SuccessCreatedAgain"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Payment not exist. As code you will get `general.no_resource_found`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/payments/subscription/{subscription_id}:
+    delete:
+      summary: Cancel subscription
+      description: |
+         Cancel subscription
+      tags:
+        - Payments
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: subscription_id
+          in: path
+          description: subscription id
+          required: true
+          type: number
+      responses:
+        200:
+          schema:
+              $ref: "#/definitions/SuccessCancelSubscription"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Subscription not exist. As code you will get `general.no_resource_found`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+
+  SuccessConfirmPayment:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            redirect_url:
+              type: string
+              description: Redirect url
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  SuccessCreatedAgain:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/PaymentSimply"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  PaymentList:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentWithSubscription"
+    meta:
+      type: object
+      properties:
+        pagination:
+          $ref: "#/definitions/Pagination"
+    exec_time:
+      type: number
+      format: float
+      description: API execution time
+
+  SuccessListCards:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/definitions/cardItem"
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  SuccessCancelSubscription:
+        type: object
+        properties:
+          data:
+            type: string
+            description: It will be empty array
+          exec_time:
+            type: number
+            format: float
+            description: API execution time
+
+  SuccessCancelPayment:
+        type: object
+        properties:
+          data:
+            type: string
+            description: It will be empty array
+          exec_time:
+            type: number
+            format: float
+            description: API execution time
+
+  cardItem:
+    type: object
+    properties:
+      cardExpirationYear:
+        type: number
+        format: int
+        description: Expiration year
+      cardExpirationMonth:
+        type: integer
+        description: Expiration month
+      cardNumberMasked:
+        type: string
+        description: Card number with mask
+      cardBrand:
+        type: string
+        description: Card brand (e.g., VISA)
+      value:
+        type: string
+        description: Token
+      brandImageUrl:
+        type: string
+        description: Url for image brand
+      preferred:
+        type: bool
+        description: Default selected
+      status:
+        type: string
+        description: Status, alwais "ACTIVE"
+
+  PaymentSimply:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      transaction_id:
+        type: integer
+        description: Transaction id
+      subscription_id:
+        type: integer
+        description: Subscription id
+      price_total:
+        type: integer
+        description: Price total
+      currency:
+        type: integer
+        description: PLN or EUR
+      vat:
+        type: integer
+        description: VAT
+      external_order_id:
+        type: string
+        description: Order id from payu
+      status:
+        type: string
+        description: Status
+      type:
+        type: integer
+        description: 0-simply, 1-card
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+
+  Payment:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      transaction_id:
+        type: integer
+        description: Transaction id
+      subscription_id:
+        type: integer
+        description: Subscription id
+      price_total:
+        type: integer
+        description: Price total
+      currency:
+        type: integer
+        description: PLN or EUR
+      vat:
+        type: integer
+        description: VAT
+      external_order_id:
+        type: string
+        description: Order id from payu
+      status:
+        type: string
+        description: Status
+      type:
+        type: integer
+        description: 0-simply, 1-card
+      days:
+        type: integer
+        description: Days
+      expiration_date:
+        type: string
+        description: Date of expiration payment in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      transaction:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/Transaction"
+
+  Transaction:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      company_modules_history:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/CompanyModuleHistory"
+
+  CompanyModuleHistory:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      company_id:
+        type: integer
+        description: Company id
+      module_id:
+        type: integer
+        description: Module id
+      module_mod_id:
+        type: integer
+        description: Module mod id
+      old_value:
+        type: string
+        description: Old value
+      new_value:
+        type: string
+        description: New value
+      start_date:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      expiration_date:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      status:
+        type: integer
+        description: Status
+      package_id:
+        type: integer
+        description: Package id
+      price:
+        type: integer
+        description: Price
+      currency:
+        type: string
+        description: Current (PLN/EUR)
+      vat:
+        type: integer
+        description: VAT
+      transaction_id:
+        type: integer
+        description: Transaction id
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      module:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/Module"
+      module_mod:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/ModuleMod"
+      package:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/Package"
+
+  Module:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      description:
+        type: string
+        description: Description
+      visible:
+        type: boolean
+        description: Show on list on page
+      available:
+        type: boolean
+        description: Is availeble in this time
+
+  ModuleMod:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      module_id:
+        type: number
+        format: int
+        description: module id
+      test:
+        type: boolean
+        description: Is test mod
+      value:
+        type: string
+        description: Value
+
+  Package:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      name:
+        type: string
+        description: Name
+      slug:
+        type: string
+        description: Slug
+      default:
+        type: boolean
+        description: Is default package
+      portal_name:
+        type: string
+        description: Portal name
+
+  PaymentWithSubscription:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      transaction_id:
+        type: integer
+        description: Transaction id
+      subscription_id:
+        type: integer
+        description: Subscription id
+      price_total:
+        type: integer
+        description: Price total
+      currency:
+        type: integer
+        description: PLN or EUR
+      vat:
+        type: integer
+        description: VAT
+      external_order_id:
+        type: string
+        description: Order id from payu
+      status:
+        type: string
+        description: Status
+      type:
+        type: integer
+        description: 0-simply, 1-card
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      subscription:
+       $ref: "#/definitions/Subscription"
+
+  Subscription:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      company_module_id:
+        type: integer
+        description: Company module id
+      repeats:
+        type: integer
+        description: Count repeats
+      days:
+        type: integer
+        description: How many days of renewal
+      card_token:
+        type: integer
+        description: Card token
+
+  Pagination:
+   type: object
+   properties:
+    total:
+      type: number
+      format: integer
+      description: Total number of results
+    count:
+      type: number
+      format: integer
+      description: Number of returned results
+    per_page:
+      type: number
+      format: integer
+      description: Number of results per page
+    current_page:
+      type: number
+      format: integer
+      description: Number of current page
+    total_pages:
+     type: number
+     format: integer
+     description: Total number of pages
+    links:
+     $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

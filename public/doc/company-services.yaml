@@ -1,0 +1,461 @@
+swagger: '2.0'
+info:
+  title: Company services
+  description: Manage company services
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /companies/services/{id}:
+    get:
+      summary: Get one company service
+      description: |
+        Get one company service with id.
+      tags:
+        - Company service
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Company id
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Company service id. It's not validated for uniqueness
+          required: true
+          type: integer
+      responses:
+        200:
+          description: One company service
+          schema:
+              $ref: "#/definitions/CompanyService"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Company service is not found.
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /companies/services:
+    get:
+      summary: Display list of company services
+      description: |
+        Display list of company services for selected company.
+      tags:
+        - Company service
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: name
+          in: query
+          description: Company service name
+          required: false
+          type: string
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `name`, `type`, `description`, `pkwiu`, `is_used`, `created_at`, `updated_at`), Example=-is_used
+          required: false
+          type: string
+      responses:
+        200:
+          description: Company services list with name parameter
+          schema:
+              $ref: "#/definitions/PaginationIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Add company service
+      description: |
+        Add new company service for selected company.
+      tags:
+        - Company service
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which service will be added
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Company service name. It's not validated for uniqueness
+          required: true
+          type: string
+        - name: type
+          in: formData
+          description: Company service type. Only service or article values are acceptable.
+          required: true
+          type: string
+        - name: price_net
+          in: formData
+          description: Company service price net. It's required with price_gross present
+          required: false
+          type: number
+        - name: price_gross
+          in: formData
+          description: Company service price gross. It's required with price_net present
+          required: false
+          type: number
+        - name: print_on_invoice
+          in: formData
+          description: Determines if description will be shown on the invoice.
+          required: true
+          type: boolean
+        - name: description
+          in: formData
+          description: Company service description. Limited to 1000 characters. Can be empty.
+          required: true
+          type: string
+        - name: pkwiu
+          in: formData
+          description: Company service pkwiu. Max 20 characters. Can be empty.
+          required: true
+          type: string
+        - name: vat_rate_id
+          in: formData
+          description: Vat rate id for new company service. It should be selected only from visible vat rates
+          required: true
+          type: integer
+        - name: service_unit_id
+          in: formData
+          description: Id of service unit related to this company service.
+          required: true
+          type: integer
+      responses:
+        201:
+          description: Company service was succesfully saved
+          schema:
+              $ref: "#/definitions/CompanyServiceSavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    put:
+      summary: Update company service
+      description: |
+        Update company service for selected company.
+      tags:
+        - Company service
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which service will be added
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Company service name. It's not validated for uniqueness
+          required: true
+          type: string
+        - name: price_net
+          in: formData
+          description: Company service price net. It's required with price_gross present
+          required: false
+          type: number
+        - name: price_gross
+          in: formData
+          description: Company service price gross. It's required with price_net present
+          required: false
+          type: number
+        - name: print_on_invoice
+          in: formData
+          description: Determines if description will be shown on the invoice.
+          required: true
+          type: boolean
+        - name: description
+          in: formData
+          description: Company service description. Limited to 1000 characters. Can be empty.
+          required: true
+          type: string
+        - name: pkwiu
+          in: formData
+          description: Company service pkwiu. It's validated under format DD.DD.DD.D
+          required: false
+          type: string
+        - name: vat_rate_id
+          in: formData
+          description: Vat rate id for company service. It should be selected only from visible vat rates
+          required: true
+          type: integer
+        - name: service_unit_id
+          in: formData
+          description: Id of service unit related to this company service.
+          required: true
+          type: integer
+      responses:
+        201:
+          description: Company service was succesfully saved
+          schema:
+              $ref: "#/definitions/CompanyServiceUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/service-units:
+    get:
+      summary: Display list of service units
+      description: |
+        Display list of service units.
+      tags:
+        - Company service
+      responses:
+        200:
+          description: Service units list.
+          schema:
+              $ref: "#/definitions/ServiceUnitList"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  CompanyServiceUpdatedResponse:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/UpdateCompanyService"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CompanyServiceSavedResponse:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/CompanyService"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UpdateCompanyService:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company service id
+      company_id:
+        type: number
+        format: int
+        description: Id of company for which this service belongs to
+      name:
+        type: string
+        description: Name of service
+      type:
+        type: string
+        description: Type of service
+      price_net:
+        type: number
+        description: Company Service Price Net
+      price_gross:
+        type: number
+        description: Company Service Price Gross
+      print_on_invoice:
+        type: boolean
+        description: Determines if description will be shown on the invoice.
+      description:
+        type: string
+        description: Company service description.
+      pkwiu:
+        type: string
+        description: Pkwiu of service
+      vat_rate_id:
+        type: number
+        format: int
+        description: Id of vat rate assigned to this company service
+      service_unit_id:
+        type: number
+        format: int
+        description: Id of service unit related to this company service
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this company service
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who last updated this company service
+      is_used:
+        type: number
+        format: integer
+        description: If item is already used
+
+  CompanyService:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company service id
+      company_id:
+        type: number
+        format: int
+        description: Id of company for which this service belongs to
+      name:
+        type: string
+        description: Name of service
+      type:
+        type: string
+        description: Type of service
+      price_net:
+        type: number
+        description: Company Service Price Net
+      price_gross:
+        type: number
+        description: Company Service Price Gross
+      print_on_invoice:
+        type: boolean
+        description: Determines if description will be shown on the invoice.
+      description:
+        type: string
+        description: Company service description.
+      pkwiu:
+        type: string
+        description: Pkwiu of service
+      vat_rate_id:
+        type: number
+        format: int
+        description: Id of vat rate assigned to this company service
+      service_unit_id:
+        type: number
+        format: int
+        description: Id of service unit related to this company service
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this company service
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who last updated this company service
+      is_used:
+        type: number
+        format: integer
+        description: Quantity of using
+      service_unit:
+        properties:
+          data:
+            $ref: "#/definitions/ServiceUnit"
+
+  ServiceUnitList:
+    type: array
+    items:
+      $ref: "#/definitions/ServiceUnit"
+
+  ServiceUnit:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Id of service unit
+      name:
+        type: string
+        description: Service unit name
+      slug:
+        type: string
+        description: Service unit slug
+      decimal:
+        type: integer
+        description: Whether decimal value is allowed. If yes it can contain up to 3 decimal places        
+      created_at:
+        type: string
+        description: Date of unit creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last unit update in `Y-m-d H:i:s` format
+
+  PaginationIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/CompanyService"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

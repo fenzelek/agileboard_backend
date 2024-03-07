@@ -1,0 +1,12 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+title Delete comment from Task/Document \n
+
+
+(Delete comment) as (Use)
+
+User --> (Use)
+
+@enduml
+

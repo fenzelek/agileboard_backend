@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+title Edit Interaction in Comment/Task/Document \n
+
+(Edit comment///Document//) as (Use)
+(Change Interaction User/Group) as (SelectUser)
+
+User --> (SelectUser)
+User --> (Use)
+
+note right of (SelectUser) : Interaction can be also deleted
+
+@enduml

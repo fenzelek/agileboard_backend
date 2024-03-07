@@ -1,0 +1,74 @@
+swagger: '2.0'
+info:
+  title: Invoice correction types
+  description: Display available invoice correction types
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-correction-types:
+    get:
+      summary: Display list of invoice correction types
+      description: |
+        Displays list of available invoice invoice correction types.
+      tags:
+        - Invoice Correction Types
+      responses:
+        200:
+          description: Invoice Correction Type list
+          schema: 
+              $ref: "#/definitions/InvoiceCorrectionTypesIndex"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  InvoiceCorrectionTypesIndex:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceCorrectionType"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  InvoiceCorrectionType:
+    type: object
+    properties:
+      slug:
+        type: string
+        description: Invoice Correction type slug
+      description:
+        type: string
+        description: Invoice Correction type description
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

@@ -1,0 +1,882 @@
+swagger: '2.0'
+info:
+  title: Reports
+  description: Display reports.
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+
+  /reports/tickets/daily:
+    get:
+      summary: Get daily report
+      description: |
+        Get daily report for tickets.
+      tags:
+        - Tickets
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: date_from
+          in: query
+          description: Date from
+          required: true
+          type: string
+          format: date
+        - name: date_to
+          in: query
+          description: Date to
+          required: true
+          type: string
+          format: date
+        - name: project_id
+          in: query
+          description: Id of project
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/ReportTicketDailyResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/receipts:
+    get:
+      summary: Get receipts report
+      description: |
+        Get receipts report sum price net, price gross and tax.
+      tags:
+        - Receipts
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add receipt
+          required: false
+          type: integer
+        - name: date_start
+          in: query
+          description: Start date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the receipt use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: payment_method
+          in: query
+          description: Method of payment use for filter
+          required: false
+          type: string
+        - name: transaction_number
+          in: query
+          description: Unique receipt number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the receipt use for searching
+          required: false
+          type: string
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/ReportResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/online-sales:
+    get:
+      summary: Get online sales report
+      description: |
+        Get online sales report sum price net, price gross and tax.
+      tags:
+        - OnlineSales
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which online sales are retrieved
+          required: true
+          type: integer
+        - name: email
+          in: query
+          description: Customer Email
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the online sale use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: transaction_number
+          in: query
+          description: Unique online sale number for dedicate company use for searching
+          required: false
+          type: string
+        - name: number
+          in: query
+          description: Number of issue the online sale use for searching
+          required: false
+          type: string
+        - name: year
+          in: query
+          description: Year of sale use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/ReportOnlineSaleResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/invoices-registry:
+    get:
+      summary: Get invoices registry
+      description: |
+        Get invoice registry with all taxes.
+      tags:
+        - InvoicesRegistry
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Id invoice type
+          required: false
+          type: integer
+        - name: year
+          in: query
+          description: Year of sale the invoice use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale the invoice use for filter
+          required: false
+          type: integer
+        - name: vat_rate_id
+          in: query
+          description: Id of vat rate use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/InvoicesRegistryResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+  /reports/invoices-registry-report:
+    get:
+      summary: Get invoices registry report
+      description: |
+        Get invoice registry report (sums of all taxes plus summery).
+      tags:
+        - InvoicesRegistry
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Id invoice type
+          required: false
+          type: integer
+        - name: year
+          in: query
+          description: Year of sale the invoice use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale the invoice use for filter
+          required: false
+          type: integer
+        - name: vat_rate_id
+          in: query
+          description: Id of vat rate use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/InvoicesRegistryResponseReport"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/invoices-registry-pdf:
+    get:
+      summary: Export invoices registry to pdf
+      description: |
+        Export invoices registry to pdf.
+      tags:
+        - InvoicesRegistry
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Id invoice type
+          required: false
+          type: integer
+        - name: year
+          in: query
+          description: Year of sale the invoice use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale the invoice use for filter
+          required: false
+          type: integer
+        - name: vat_rate_id
+          in: query
+          description: Id of vat rate use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Pdf of invoice registry
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/invoices-registry-xls:
+    get:
+      summary: Export invoices registry to xls
+      description: |
+        Export invoices registry to xls.
+      tags:
+        - InvoicesRegistry
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Id invoice type
+          required: false
+          type: integer
+        - name: year
+          in: query
+          description: Year of sale the invoice use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale the invoice use for filter
+          required: false
+          type: integer
+        - name: vat_rate_id
+          in: query
+          description: Id of vat rate use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Xls of invoice registry
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/invoices-report-export:
+    get:
+      summary: Export invoices register to csv based on selected client in company settings.
+      description: |
+        Export invoices register to csv.
+      tags:
+        - InvoicesRegister
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Id invoice type
+          required: false
+          type: integer
+        - name: year
+          in: query
+          description: Year of sale the invoice use for filter (min:2016) - required if set filter by month
+          required: false
+          type: integer
+        - name: month
+          in: query
+          description: Month of sale the invoice use for filter
+          required: false
+          type: integer
+        - name: vat_rate_id
+          in: query
+          description: Id of vat rate use for filter
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: CSV of invoice register
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /reports/company-invoices:
+    get:
+      summary: Get company invoices report
+      description: |
+        Get company invoices report sum price net, price gross, vat sum and payment_left.
+      tags:
+        - Company invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which invoices are displayed
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Id of invoice
+          required: false
+          type: integer
+        - name: number
+          in: query
+          description: Number of invoice
+          required: false
+          type: string
+        - name: contractor_id
+          in: query
+          description: Id of contractor invoice
+          required: false
+          type: integer
+        - name: contractor
+          in: query
+          description: Name contractor or number vatin
+          required: false
+          type: string
+        - name: drawer_id
+          in: query
+          description: Id of drawer invoice
+          required: false
+          type: integer
+        - name: status
+          in: query
+          description: Status of invoice (`all`, `paid`, `not_paid`, `paid_late`, `deleted`)
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: proforma_id
+          in: query
+          description: Invoices with given proforma_id
+          required: false
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Filter invoices with given type id
+          required: false
+          type: integer
+
+      responses:
+        200:
+          description: Report
+          schema:
+            $ref: "#/definitions/CompanyInvoicesReportResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  CompanyInvoicesReportResponse:
+    type: object
+    properties:
+      price_net_sum:
+        type: number
+        format: float
+        description: Sum price net of company invoices
+      price_gross_sum:
+        type: number
+        format: float
+        description: Sum price gross of company invoices
+      vat_sum_sum:
+        type: number
+        format: floatr
+        description: Sum vat sum of company invoices
+      payment_left_sum:
+        type: number
+        format: floatr
+        description: Sum payment left of company invoices
+
+  ReportOnlineSaleResponse:
+    type: object
+    properties:
+      price_net_report:
+        type: number
+        format: float
+        description: Sum price net of online sales
+      price_gross_report:
+        type: number
+        format: float
+        description: Sum price gross of online sales
+      vat_sum_report:
+        type: number
+        format: floatr
+        description: Sum tax of online sales
+
+  ReportResponse:
+    type: object
+    properties:
+      price_net_report:
+        type: number
+        format: float
+        description: Sum price net of receipts
+      price_gross_report:
+        type: number
+        format: float
+        description: Sum price gross of receipts
+      vat_sum_report:
+        type: number
+        format: floatr
+        description: Sum tax of receipts
+
+  ReportTicketDailyResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TicketHistory"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  TicketHistory:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Ticket id
+      user_id:
+        type: number
+        format: int
+        description: User id
+      resource_id:
+        type: number
+        format: int
+        description: Resource id (for example ticket id)
+      object_id:
+        type: number
+        format: int
+        description: Object id  (for example ticket_comment id)
+      field_id:
+        type: number
+        format: int
+        description: history_field id
+      value_before:
+        type: string
+        description: Value before changes
+      label_before:
+        type: string
+        description: Label before changes
+      value_after:
+        type: string
+        description: Value after changes
+      label_after:
+        type: string
+        description: Label after changes
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      user:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/User"
+      field:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/HistoryField"
+
+  User:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User e-mail
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        type: string
+        description: User avatar
+      deleted:
+        type: boolean
+        description: Whether user has been deleted
+      activated:
+        type: boolean
+        description: Whether user has been activated
+
+  HistoryField:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: History field id
+      object_type:
+        type: string
+        description: Type object for example ticket
+      field_name:
+        type: string
+        description: field name for example story_id
+
+  InvoicesRegistryResponse:
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryItems"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+
+  InvoiceRegistryItems:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryItem"
+
+  InvoiceRegistryItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+      company_id:
+        type: integer
+        description: Id company, to which invoice was added
+      contractor_id:
+        type: integer
+        description: Id contractor
+      sale_date:
+        type: string
+        description: Date of sale the services (`Y-m-d` format)
+      issue_date:
+        type: string
+        description: Date of issue the invoice (`Y-m-d` format)
+      invoice_type_id:
+        type: integer
+        description: CreateInvoice type
+      name:
+        type: string
+        description: Contractor name
+      vatin:
+        type: number
+        description: Contractor VAT ID
+      main_address_street:
+        type: string
+        description: Contractor address street
+      main_address_number:
+        type: string
+        description: Contractor address number
+      main_address_zip_code:
+        type: string
+        description: Contractor address zip code
+      main_address_city:
+        type: string
+        description: Contractor address city
+      main_address_country:
+        type: string
+        description: Contractor address country
+      taxes:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryTaxItems"
+
+  InvoiceRegistryTaxItems:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryTaxItem"
+
+  InvoiceRegistryTaxItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Tax id
+      invoice_id:
+        type: number
+        format: int
+        description: CreateInvoice id, to which tax was add
+      vat_rate_id:
+        type: number
+        format: int
+        description: Vat rate id
+      vat_rate_name:
+        type: number
+        format: int
+        description: Vat rate name
+      price_net:
+        type: number
+        format: int
+        description: Tax price net
+      vat_sum:
+        type: number
+        format: int
+        description: Tax vat sum
+      price_gross:
+        type: number
+        format: int
+        description: Tax price gross
+
+  InvoicesRegistryResponseReport:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoicesRegistryResponseReportData"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoicesRegistryResponseReportData:
+    type: object
+    properties:
+      price_net:
+        type: number
+        format: float
+        description: Sum price net of invoices
+      price_gross:
+        type: number
+        format: float
+        description: Sum price gross of invoices
+      vat_sum:
+        type: number
+        format: floatr
+        description: Sum tax of invoices
+      vat_rates:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryVatRates"
+
+  InvoiceRegistryVatRates:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceRegistryVatRate"
+
+  InvoiceRegistryVatRate:
+    type: object
+    properties:
+      vat_rate_id:
+        type: integer
+        description: Vat rate Id
+      vat_rate_name:
+        type: string
+        description: Vat rate name
+      price_net:
+        type: number
+        format: float
+        description: Sum price net with current vat rate
+      vat_sum:
+        type: number
+        format: float
+        description: Sum tax for current vat rate
+      price_gross:
+        type: number
+        format: float
+        description: Sum price gross with current vat rate
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)

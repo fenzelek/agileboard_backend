@@ -1,0 +1,198 @@
+swagger: '2.0'
+info:
+  title: CreateInvoice payments
+  description: Display available invoice payments
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-payments:
+    get:
+      summary: Display list of invoice payments
+      description: |
+        Displays list of available invoice payments.
+      tags:
+        - CreateInvoice payment
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: invoice_id
+          in: query
+          description: Id of invoice use for filter
+          required: true
+          type: integer
+      responses:
+        200:
+          description: CreateInvoice payments list
+          schema: 
+              $ref: "#/definitions/SuccessInvoicePaymentsIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Add new invoice payment
+      description: |
+        Add new invoice payment to dedicate company.
+      tags:
+        - CreateInvoice payment
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: invoice_id
+          in: formData
+          description: Id of invoice belongs to invoice payment
+          required: true
+          type: integer
+        - name: amount
+          in: formData
+          description: Amount of invoice payment. It can't be greater than gross price of invoice
+          required: true
+          type: number
+          format: float
+        - name: payment_method_id
+          in: formData
+          description: Id of payment methods belongs to invoice payment
+          required: true
+          type: integer
+      responses:
+        201:
+          description: CreateInvoice payment was succesfully saved
+          schema:
+              $ref: "#/definitions/SuccessInvoicePaymentsIndexResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /invoice-payments/{id}:
+    delete:
+      summary: Remove invoice payment
+      description: |
+        It is soft deleted.
+      tags:
+        - CreateInvoice payment
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which invoice payment is removed
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: CreateInvoice payment id
+          required: true
+          type: integer
+      responses:
+        204:
+          description: Empty array
+          schema:
+              $ref: "#/definitions/InvoicePaymentRemoveResponse"
+                      
+definitions:
+  SuccessInvoicePaymentsIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoicePayment"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoicePayment:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Vat rate id
+      invoice_id:
+        type: number
+        format: int
+        description: Id of invoice assigned to this cash flow
+      amount:
+        type: number
+        format: int
+        description: CreateInvoice payment amount
+      payment_method_id:
+        type: number
+        format: int
+        description: Id of payment method assigned to this invoice payment
+      registrar_id:
+        type: number
+        format: int
+        description: Id of user who add invoice payment
+      created_at:
+        type: string
+        description: Date of item creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last item update in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of last item delete in `Y-m-d H:i:s` format
+
+  InvoicePaymentRemoveResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  SuccessInvoicePaymentsIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoicePayment"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

@@ -1,0 +1,570 @@
+swagger: '2.0'
+info:
+  title: Contractors
+  description: Display and manage contractors
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /contractors:
+    get:
+      summary: List contractors
+      description: |
+        Retrieve all contractors.
+      tags:
+        - Contractor
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: search
+          in: query
+          description: Search name or NIP
+          required: false
+          type: string
+      responses:
+        200:
+          description: List of contractors
+          schema:
+              $ref: "#/definitions/ContractorIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Create new contractor
+      description: |
+        Create new contractor.
+      tags:
+        - Contractor
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Contractor name
+          required: true
+          type: string
+        - name: country_vatin_prefix_id
+          in: formData
+          description: Id of vatin prefix, based on country. Can be empty.
+          type: integer
+        - name: vatin
+          in: formData
+          description: VAT number (mas 255 characters, might be empty)
+          required: true
+          type: string
+        - name: email
+          in: formData
+          description: Email (max 255 characters, might be empty)
+          required: true
+          type: string
+        - name: phone
+          in: formData
+          description: Phone number (max 15 characters, might be empty)
+          required: true
+          type: string
+        - name: bank_name
+          in: formData
+          description: Bank name (max 63 characters, might be empty)
+          required: false
+          type: string
+        - name: bank_account_number
+          in: formData
+          description: Bank account number (max 63 characters, might be empty)
+          required: false
+          type: string
+        - name: main_address_street
+          in: formData
+          description: Main address street (max 255 characters)
+          required: true
+          type: string
+        - name: main_address_number
+          in: formData
+          description: Main address number (max 31 characters)
+          required: true
+          type: string
+        - name: main_address_zip_code
+          in: formData
+          description: Main address zip code (max 255 characters)
+          required: true
+          type: string
+        - name: main_address_city
+          in: formData
+          description: Main address city (max 63 characters)
+          required: true
+          type: string
+        - name: main_address_country
+          in: formData
+          description: Main address country (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_street
+          in: formData
+          description: Contact address street (max 255 characters)
+          required: true
+          type: string
+        - name: contact_address_number
+          in: formData
+          description: Contact address number (max 31 characters)
+          required: true
+          type: string
+        - name: contact_address_zip_code
+          in: formData
+          description: Contact address zip code (max 255 characters)
+          required: true
+          type: string
+        - name: contact_address_city
+          in: formData
+          description: Contact address city (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_country
+          in: formData
+          description: Contact address country (max 63 characters)
+          required: true
+          type: string
+        - name: default_payment_term_days
+          in: formData
+          description: Contractor default payment term days (minimum 0, maximum 366)
+          required: false
+          type: integer
+        - name: invoice_format_id
+          in: formData
+          description: CreateInvoice format ID for contractor
+          required: false
+          type: integer
+        - name: addresses
+          description: Contractor delivery addresses (required, if application settings for company `invoices.addresses.delivery.enabled` set on true)
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/AddressItem"
+      responses:
+        201:
+          description: Contractor was succesfully saved
+          schema:
+              $ref: "#/definitions/ContractorSavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update contractor
+      description: |
+        Update contractor. You can only update contractor that you are assigned and you have update contractor permission. Updating existing contractor addresses need contain id for every address (identified in database). If it would be omitted, address will add as new one. The addresses not including in updating process will be remove form database pernamently.
+      tags:
+        - Contractor
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Contractor name
+          required: true
+          type: string
+        - name: country_vatin_prefix_id
+          in: formData
+          description: Id of vatin prefix, based on country. Can be empty.
+          type: integer
+        - name: vatin
+          in: formData
+          description: VAT number (mas 255 characters)
+          required: true
+          type: string
+        - name: email
+          in: formData
+          description: Email (max 255 characters, might be empty)
+          required: true
+          type: string
+        - name: phone
+          in: formData
+          description: Phone number (max 15 characters, might be empty)
+          required: true
+          type: string
+        - name: bank_name
+          in: formData
+          description: Bank name (max 63 characters, might be empty)
+          required: true
+          type: string
+        - name: bank_account_number
+          in: formData
+          description: Bank account number (max 63 characters, might be empty)
+          required: true
+          type: string
+        - name: main_address_street
+          in: formData
+          description: Main address street (max 255 characters)
+          required: true
+          type: string
+        - name: main_address_number
+          in: formData
+          description: Main address number (max 31 characters)
+          required: true
+          type: string
+        - name: main_address_zip_code
+          in: formData
+          description: Main address zip code (max 255 characters)
+          required: true
+          type: string
+        - name: main_address_city
+          in: formData
+          description: Main address city (max 63 characters)
+          required: true
+          type: string
+        - name: main_address_country
+          in: formData
+          description: Main address country (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_street
+          in: formData
+          description: Contact address street (max 255 characters)
+          required: true
+          type: string
+        - name: contact_address_number
+          in: formData
+          description: Contact address number (max 31 characters)
+          required: true
+          type: string
+        - name: contact_address_zip_code
+          in: formData
+          description: Contact address zip code (max 255 characters)
+          required: true
+          type: string
+        - name: contact_address_city
+          in: formData
+          description: Contact address city (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_country
+          in: formData
+          description: Contact address country (max 63 characters)
+          required: true
+          type: string
+        - name: default_payment_term_days
+          in: formData
+          description: Contractor default payment term days (minimum 0, maximum 366)
+          required: false
+          type: integer
+        - name: invoice_format_id
+          in: formData
+          description: CreateInvoice format ID for contractor
+          required: false
+          type: integer
+        - name: addresses
+          description: Contractor delivery addresses (required, if application settings for company `invoices.addresses.delivery.enabled` set on true)
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/AddressItem"
+      responses:
+        200:
+          description: Contractor was succesfully updated
+          schema:
+              $ref: "#/definitions/ContractorUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /contractors/{id}:
+    get:
+      summary: Show one contractor
+      description: |
+        Display contractor.
+      tags:
+        - Contractor
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: number
+        - name: id
+          in: path
+          description: Contractor id
+          required: true
+          type: number
+      responses:
+        200:
+          description: Get contractor successfully
+          schema:
+              $ref: "#/definitions/ContractorShowResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Remove contractor from company
+      description: |
+        It is soft deleted. Can't delete contractor used in an invoice.
+      tags:
+        - Contractor
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Contractor id
+          required: true
+          type: number
+      responses:
+        200:
+          description: Empty array
+          schema:
+              $ref: "#/definitions/ContractorRemoveResponse"
+
+definitions:
+  ContractorSavedResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/Contractor"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ContractorUpdatedResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/Contractor"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ContractorIndexResponse:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/definitions/Contractor"
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  ContractorShowResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/Contractor"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ContractorRemoveResponse:
+        type: object
+
+        properties:
+          data:
+            type: string
+            description: It will be empty array
+          exec_time:
+            type: number
+            format: float
+            description: API execution time
+
+  Contractor:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Contractor id
+      name:
+        type: string
+        description: Contractor name
+      country_vatin_prefix_id:
+        type: integer
+        description: Country vatin prefix ID.
+      vatin:
+        type: string
+        description: Vat number
+      email:
+        type: string
+        description: E-mail
+      phone:
+        type: string
+        description: Phone number
+      bank_name:
+        type: string
+        description: Bank name
+      bank_account_number:
+        type: string
+        description: Bank account number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      contact_address_street:
+        type: string
+        description: Contact address street
+      contact_address_number:
+        type: string
+        description: Contact address number
+      contact_address_zip_code:
+        type: string
+        description: Contact address zip code
+      contact_address_city:
+        type: string
+        description: Contact address city
+      contact_address_country:
+        type: string
+        description: Contact address country
+      default_payment_term_days:
+        type: number
+        format: int
+        description: Default payment term in days (for example on invoices)
+      default_payment_method_id:
+        type: number
+        format: int
+        description: Default payment method id (for example on invoices)
+      payments_all:
+        type: number
+        format: int
+        description: Payments this contractor
+      payments_paid:
+        type: number
+        format: int
+        description: Payments paid this contractor
+      payments_paid_late:
+        type: number
+        format: int
+        description: Payments paid late this contractor
+      payments_not_paid:
+        type: number
+        format: int
+        description: Payments of unpaid this contractor
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this contractor
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who updated this contractor
+      remover_id:
+        type: number
+        format: int
+        description: Id of user who removed this contractor
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted contractor update in `Y-m-d H:i:s` format
+      addresses:
+          $ref: "#/definitions/Addresses"
+
+  Addresses:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Addresses
+        items:
+            $ref: "#/definitions/AddressItem"
+
+  AddressItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Address Id (for update address)
+      type:
+        type: string
+        description: Type of address (Currently acceptable value`:` 'delivery')
+      default:
+        type: boolean
+        description: Default delivery address flag (only one address can have set flag)
+      street:
+        type: string
+        description: Street
+      number:
+        type: string
+        description: Number
+      zip_code:
+        type: string
+        description: Zip code (max 7 letter/digits)
+      city:
+        type: string
+        description: City
+      country:
+        type: string
+        description: Country
+
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

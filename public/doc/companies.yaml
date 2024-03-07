@@ -1,0 +1,1267 @@
+swagger: '2.0'
+info:
+  title: Companies
+  description: Display and manage companies
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /companies:
+    get:
+      summary:
+      description: |
+        Retrieve all companies. Method Available only for super admin.
+      tags:
+        - Company
+      responses:
+        200:
+          description: List of companies
+          schema:
+              $ref: "#/definitions/CompanyIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Create new company
+      description: |
+        Create new company and assign user as owner of this company.
+      tags:
+        - Company
+      parameters:
+        - name: name
+          in: formData
+          description: Company name
+          required: true
+          type: string
+        - name: vat_payer
+          in: formData
+          description: Whether company is VAT payer
+          required: true
+          type: boolean
+        - name: vat_release_reason_id
+          in: formData
+          description: When company isn't VAT payer than the parameter is `required`
+          required: true
+          type: integer
+        - name: vat_release_reason_note
+          in: formData
+          description: When vat_release_reason is `LEGAL_BASIS` than the parameter is `required`, (max:1000 chars)
+          required: true
+          type: string
+      responses:
+        200:
+          description: Companies list
+          schema:
+              $ref: "#/definitions/CompanySavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update company
+      description: |
+        Update company. You can only update company that you are assigned and you have update company permission
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company that will be updated
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Company name
+          required: true
+          type: string
+        - name: vatin
+          in: formData
+          description: VAT number (mas 255 characters)
+          required: true
+          type: string
+        - name: vat_payer
+          in: formData
+          description: Whether company is VAT payer
+          required: true
+          type: boolean
+        - name: vat_release_reason_id
+          in: formData
+          description: When company isn't VAT payer than the parameter is `required`
+          required: true
+          type: integer
+        - name: vat_release_reason_note
+          in: formData
+          description: When vat_release_reason is `LEGAL_BASIS` than the parameter is `required`, (max:1000 chars)
+          required: true
+          type: string
+        - name: country_vatin_prefix_id
+          in: formData
+          description: Id of vatin prefix, based on country. Can be empty.
+          type: integer
+        - name: email
+          in: formData
+          description: Email (max 255 characters, might be empty)
+          required: true
+          type: string
+        - name: logotype
+          in: formData
+          description: File with company logotype. Null can be sent.
+          type: file
+        - name: remove_logotype
+          in: formData
+          description: If passed 1 or true, logotype will be removed. Can't be set to true when
+            logotype file is sent.
+          type: boolean
+        - name: website
+          in: formData
+          description: Website (max 255 characters, might be empty)
+          required: true
+          type: string
+        - name: phone
+          in: formData
+          description: Phone number (max 15 characters, might be empty)
+          required: true
+          type: string
+        - name: main_address_street
+          in: formData
+          description: Main address street (max 255 characters)
+          required: true
+          type: string
+        - name: main_address_number
+          in: formData
+          description: Main address number (max 31 characters)
+          required: true
+          type: string
+        - name: main_address_zip_code
+          in: formData
+          description: Main address zip code (max 7 characters)
+          required: true
+          type: string
+        - name: main_address_city
+          in: formData
+          description: Main address city (max 63 characters)
+          required: true
+          type: string
+        - name: main_address_country
+          in: formData
+          description: Main address country (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_street
+          in: formData
+          description: Contact address street (max 255 characters)
+          required: true
+          type: string
+        - name: contact_address_number
+          in: formData
+          description: Contact address number (max 31 characters)
+          required: true
+          type: string
+        - name: contact_address_zip_code
+          in: formData
+          description: Contact address zip code (max 7 characters)
+          required: true
+          type: string
+        - name: contact_address_city
+          in: formData
+          description: Contact address city (max 63 characters)
+          required: true
+          type: string
+        - name: contact_address_country
+          in: formData
+          description: Contact address country (max 63 characters)
+          required: true
+          type: string
+        - name: bank_accounts
+          in: formData
+          description: Bank accounts list
+          required: true
+          type: array
+          items:
+            $ref: "#/definitions/BankAccountInputData"
+      responses:
+        200:
+          description: Company was succesfully updated
+          schema:
+              $ref: "#/definitions/CompanyUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        421:
+          description: Company already has a invoice. As code you will get `company.blocked_changing_vat_payer_setting`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+
+  /companies/settings:
+    put:
+      summary: Update company
+      description: |
+        Update company. You can only update company that you are assigned and you have update company permission
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company that will be updated
+          required: true
+          type: integer
+        - name: force_calendar_to_complete
+          in: formData
+          description: Settings - show or not modal with info when user doesnt complete the calendar
+          type: boolean
+          required: true
+        - name: enable_calendar
+          in: formData
+          description: Settings - show or not calendar button in menu
+          type: boolean
+          required: true
+        - name: enable_activity
+          in: formData
+          description: Settings - show or not activity button in menu
+          type: boolean
+          required: true
+      responses:
+        200:
+          description: Company was succesfully updated
+          schema:
+              $ref: "#/definitions/CompanyUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/current:
+    get:
+      summary: Show current company
+      description: |
+        Display current user company.
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which users are displayed
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Company was succesfully saved
+          schema:
+              $ref: "#/definitions/CompanyCurrentResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/country-vatin-prefixes:
+    get:
+      summary: List of vatin prefixes
+      description: |
+        Display list of country vatin prefixes.
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+      responses:
+        200:
+          description: List succesfully displayed.
+          schema:
+              $ref: "#/definitions/PrefixListResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/current/users:
+    get:
+      summary: Display list of users
+      description: |
+        Displays list of users. Depending on select company
+      tags:
+        - UserCompany
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which users are displayed
+          required: true
+          type: integer
+        - name: company_status
+          in: query
+          description: id of status which filters retrieve of users depending on status (1=`APPROVED`, 2=`REFUSED`, 3=`SUSPENDED`, 4=`DELETED`)
+          required: false
+          type: integer
+        - name: search
+          in: query
+          description: Search users with given pattern. Search will be done in first name, last name and e-mail fields. If you pass for example `abc def` all users having `abc` or `def` in mentioned fields will be returned 
+          type: string
+          required: false          
+      responses:
+        200:
+          description: Users list
+          schema:
+              $ref: "#/definitions/UserCompanyResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    put:
+      summary: Change user from company
+      description: |
+        Update role in company only if user is not owner and has status approved.
+      tags:
+        - UserCompany
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: user_id
+          in: formData
+          description: User id
+          required: true
+          type: number
+        - name: role_id
+          in: formData
+          description: Role id
+          required: true
+          type: number
+      responses:
+        200:
+          description: Empty array
+          schema:
+              $ref: "#/definitions/UserUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/invoice-settings:
+    get:
+      summary: Display current invoice settings
+      description: |
+        Displays current invoice settings. Depending on select company
+      tags:
+        - InvoiceSettings
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which users are displayed
+          required: true
+          type: integer
+      responses:
+        200:
+          description: CreateInvoice settings
+          schema:
+              $ref: "#/definitions/InvoiceSettingsResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        420:
+          description: Company has more than one invoice setting. As code you will get `company.more_than_one_registry`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    put:
+      summary: Update invoice settings for current company
+      description: |
+        Update invoice settings. Depending on select company. Sending list or registries new ones
+        will be added, already existing will get only name and default vaule updated and missing
+        registires will be deleted. Registry can only be deleted if no invoice is attached to it.
+      tags:
+        - InvoiceSettings
+      parameters:
+        - name: default_payment_term_days
+          in: formData
+          description: Company default payment term days (minimum 0, maximum 366)
+          required: true
+          type: integer
+        - name: default_invoice_gross_counted
+          in: formData
+          description: Company default invoice counting procedures (netto/brutto).
+          required: true
+          type: boolean
+        - name: invoice_registries
+          in: body
+          schema:
+            type: array
+            description: List of registries
+            items:
+              $ref: "#/definitions/InvoiceRegistriesRequest"
+
+      responses:
+        200:
+          description: CreateInvoice settings
+          schema:
+              $ref: "#/definitions/UpdateInvoiceSettingsResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        420:
+          description: Company has more than one invoice setting. As code you will get `company.more_than_one_registry`
+        421:
+          description: Company already has a invoice. As code you will get `company.blocked_changing_gross_counted_setting`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /companies/current/users/{id}:
+    delete:
+      summary: Remove user from company
+      description: |
+        It is soft deleted. Status of user in company is changed on deleted.
+      tags:
+        - UserCompany
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company from which user is removed
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: number
+      responses:
+        200:
+          description: Empty array
+          schema:
+              $ref: "#/definitions/UserRemoveResponse"
+        420:
+          description: Can't remove yourself from the Company.
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/default-payment-method:
+    put:
+      summary: Update company default payment method
+      description: |
+        Update company default payment method. You can only update company that you are assigned and you have update company permission
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company that will be updated
+          required: true
+          type: integer
+        - name: default_payment_method_id
+          in: formData
+          description: Company default payment method id
+          required: true
+          type: string
+      responses:
+        200:
+          description: Company was succesfully updated
+          schema:
+              $ref: "#/definitions/CompanyUpdatedDefaultPaymentMethodResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/get-gus-data:
+    get:
+      summary: Get company data from GUS
+      description: |
+        Get company data from GUS, based on given vatin.
+      tags:
+        - Company
+      parameters:
+        - name: vatin
+          in: query
+          description: Vatin of company we want to get data from GUS. Max 15 characters.
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Data successfully retrieved. Empty array means no data was found.
+          schema:
+              $ref: "#/definitions/GusCompanyData"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        425:
+          description: Technical problems on with GUS API or user key is wrong. As code you will get `gus.technical_problems`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/get-logotype:
+    get:
+      summary: Get company logotype file.
+      description: |
+        Get company logotype file.
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+      responses:
+        200:
+          description: File successfully retrieved. Empty array means no logotype is set.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /companies/get-logotype/{id}:
+    get:
+      summary: Get company logotype file.
+      description: |
+        Get company logotype file.
+      tags:
+        - Company
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Company id, whose logo is to be donwloaded
+          required: true
+          type: integer
+      responses:
+        200:
+          description: File successfully retrieved. Empty array means no logotype is set.
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+
+  CompanySavedResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/Company"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CompanyUpdatedResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/FullCompany"         
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CompanyUpdatedDefaultPaymentMethodResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/DefaultPaymentMethod"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CompanyIndexResponse:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/definitions/FullCompany"
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  CompanyCurrentResponse:
+    type: object
+
+    properties:
+      data:
+          $ref: "#/definitions/FullCompanyWithPackage"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UserCompanyResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/UserCompany"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  UserRemoveResponse:
+        type: object
+
+        properties:
+          data:
+            type: string
+            description: It will be empty array
+          exec_time:
+            type: number
+            format: float
+            description: API execution time
+
+  UserUpdatedResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  InvoiceSettingsResponse:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/definitions/InvoiceSettings"
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  UpdateInvoiceSettingsResponse:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items: array
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+
+  Company:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company id
+      name:
+        type: string
+        description: Company name
+      vat_payer:
+        type: boolean
+        description: Whether company pays VAT tax
+      vat_release_reason_id:
+        type: integer
+        description: The selected vat release reason
+      vat_release_reason_note:
+        type: string
+        description: The vat release reason note
+
+  FullCompany:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company id
+      name:
+        type: string
+        description: Company name
+      vatin:
+        type: string
+        description: Vat number
+      vat_payer:
+        type: boolean
+        description: Whether company pays VAT tax
+      vat_release_reason_id:
+        type: integer
+        description: The selected vat release reason
+      vat_release_reason_note:
+        type: string
+        description: The vat release reason note
+      vat_settings_is_editable:
+        type: boolean
+        description: Show possible of edit `vat payer` properties
+      country_vatin_prefix_id:
+        type: string
+        description: Vatin prefix
+      email:
+        type: string
+        description: E-mail
+      logotype:
+        type: string
+        description: Company logotype file name
+      blockade_company:
+        type: string
+        description: Reason blockaded company or null if comapny is not blockaded
+      website:
+        type: string
+        description: Company website
+      phone:
+        type: string
+        description: Phone number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      contact_address_street:
+        type: string
+        description: Contact address street
+      contact_address_number:
+        type: string
+        description: Contact address number
+      contact_address_zip_code:
+        type: string
+        description: Contact address zip code
+      contact_address_city:
+        type: string
+        description: Contact address city
+      contact_address_country:
+        type: string
+        description: Contact address country
+      default_payment_term_days:
+        type: number
+        format: int
+        description: Default payment term in days (for example on invoices)
+      default_payment_method_id:
+        type: number
+        format: int
+        description: Default payment method id (for example on invoices)
+      default_invoice_gross_counted:
+        type: boolean
+        description: Company default invoice counting procedures (netto/brutto).
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this company
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who updated this company
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      app_settings:
+        description:  Application settings
+        schema:
+           type: array
+           items:
+              $ref: "#/definitions/CompanyApplicationSettings"
+      bank_accounts:
+        description:  Bank accounts list
+        schema:
+           type: object
+           properties:
+            data:
+              type: array
+              items:
+                $ref: "#/definitions/BankAccount"
+
+  FullCompanyWithPackage:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company id
+      name:
+        type: string
+        description: Company name
+      vatin:
+        type: string
+        description: Vat number
+      vat_payer:
+        type: boolean
+        description: Whether company pays VAT tax
+      vat_release_reason_id:
+        type: integer
+        description: The selected vat release reason
+      vat_release_reason_note:
+        type: string
+        description: The vat release reason note
+      vat_settings_is_editable:
+        type: boolean
+        description: Show possible of edit `vat payer` properties
+      email:
+        type: string
+        description: E-mail
+      logotype:
+        type: string
+        description: Company logotype file name
+      blockade_company:
+        type: string
+        description: Reason blockaded company or null if comapny is not blockaded
+      website:
+        type: string
+        description: Company website
+      phone:
+        type: string
+        description: Phone number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      contact_address_street:
+        type: string
+        description: Contact address street
+      contact_address_number:
+        type: string
+        description: Contact address number
+      contact_address_zip_code:
+        type: string
+        description: Contact address zip code
+      contact_address_city:
+        type: string
+        description: Contact address city
+      contact_address_country:
+        type: string
+        description: Contact address country
+      default_payment_term_days:
+        type: number
+        format: int
+        description: Default payment term in days (for example on invoices)
+      default_payment_method_id:
+        type: number
+        format: int
+        description: Default payment method id (for example on invoices)
+      default_invoice_gross_counted:
+        type: boolean
+        description: Company default invoice counting procedures (netto/brutto).
+      force_calendar_to_complete:
+        type: boolean
+        description: Settings - show or not modal with info when user doesnt complete the calendar
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this company
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who updated this company
+      created_at:
+        type: string
+        description: Date of company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last compayny update in `Y-m-d H:i:s` format
+      full_vatin:
+        type: string
+        description: Vatin with prefix
+      app_settings:
+        description:  Application settings
+        schema:
+           type: array
+           items:
+              $ref: "#/definitions/CompanyApplicationSettings"
+      bank_accounts:
+        description:  Bank accounts list
+        schema:
+           type: object
+           properties:
+            data:
+              type: array
+              items:
+                $ref: "#/definitions/BankAccount"
+      real_package:
+        type: object
+        description: Package assigned to company
+        properties:
+          data:
+            type: object
+            $ref: "#/definitions/RealPackage"
+      vatin_prefix:
+        type: object
+        description: Vatin prefix assigned to company
+        properties:
+          data:
+            type: object
+            $ref: "#/definitions/CountryVatinPrefix"
+            
+  RealPackage:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Package id
+      slug:   
+        type: string
+        description: Package slug
+      expires_at:   
+        type: string
+        description: Date of package expiration in `Y-m-d H:i:s`. If it's set to `null` it means this package is valid without time limit                                         
+
+  CompanyApplicationSettings:
+    type: object
+    properties:
+      slug:
+        type: string
+        description: Setting name
+      value:
+        type: string
+        description: Value of setting
+
+
+  BankAccount:
+    type: object
+    properties:
+      id:
+        type: number
+        description: Bank Account Id
+      bank_name:
+        type: string
+        description: Bank name
+      number:
+        type: string
+        description: Bank account number
+      default:
+        type: boolean
+        description: Bank account default flag
+
+  BankAccountInputData:
+    type: object
+    properties:
+      id:
+        type: number
+        description: Bank Account Id (only for update bank account purpose)
+        required: false
+      bank_name:
+        type: string
+        description: Bank name
+      number:
+        type: string
+        description: Bank account number
+      default:
+        type: boolean
+        description: Bank account default flag (only one could be default)
+
+  UserCompany:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: User id
+      email:
+        type: string
+        description: User email
+      first_name:
+        type: string
+        description: User first name
+      last_name:
+        type: string
+        description: User last name
+      avatar:
+        description: User avatar
+        type: string      
+      company_role_id:
+        type: number
+        description: User role
+      company_status:
+        type: number
+        description: User status (1=`APPROVED`, 2=`REFUSED`, 3=`SUSPENDED`, 4=`DELETED`)
+      company_title:
+        type: string
+        description: User title
+      company_skills:
+        type: string
+        description: User skills
+      company_description:
+        type: string
+        description: User description
+      department:
+        type: string
+        description: User company department
+
+  InvoiceSettings:
+    type: object
+    properties:
+      default_payment_term_days:
+        type: number
+        format: int
+        description: Company default payment term days
+      invoice_registries:
+        type: object
+        description: List of registries in company
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/definitions/InvoiceRegistries"
+      default_invoice_gross_counted:
+        type: boolean
+        description: Company default invoice counting procedures (netto/brutto).
+      vat_payer:
+        type: boolean
+        description: Company Vat payer setting.
+      vat_settings_is_editable:
+        type: boolean
+        description: Show possible of edit `vat payer` properties
+
+  InvoiceRegistries:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of a registry
+      invoice_format_id:
+        type: number
+        format: int
+        description: Id of a invoice format
+      name:
+        type: string
+        description: Name of a ragistry
+      prefix:
+        type: string
+        description: Prefix prepending to invoice nr
+      company_id:
+        type: number
+        format: int
+        description: Id of a company where registry belongs to
+      default:
+        type: boolean
+        description: Tells if registry is default for this company
+      id_used:
+        type: boolean
+        description: Tells if registry was used to create an invoice
+      start_number:
+        type: integer
+        description: Start numbering invoices from this value. Start number can only be added to not
+          used registires with yearly format. Start number from registry will only be used when
+          creating VAT invoice.
+      creator_id:
+        type: number
+        format: int
+        description: Id of user who created this registry
+      editor_id:
+        type: number
+        format: int
+        description: Id of user who updated this registry
+      created_at:
+        type: string
+        description: Date of registry creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last registry update in `Y-m-d H:i:s` format
+
+  InvoiceRegistriesRequest:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of a registry. If null new registry will be created.
+      invoice_format_id:
+        type: number
+        format: int
+        description: Id of a invoice format
+      name:
+        type: string
+        description: Name of a ragistry
+      prefix:
+        type: string
+        description: Prefix prepending to invoice nr. Limited to 10 characters.
+      start_number:
+        type: integer
+        description: Start numbering invoices from this value. Start number can only be added to not
+          used registires with yearly format. Start number from registry will only be used when
+          creating VAT invoice.
+      default:
+        type: boolean
+        description: Tells if registry is default for this company
+
+  PrefixListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/CountryVatinPrefix"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CountryVatinPrefix:
+    type: object
+    properties:
+      id:
+        type: integer
+        desctiption: Id of prefix
+      name:
+        type: string
+        description: Name of country where prefix belongs to
+      key:
+        type: string
+        description: Vatin prefix in a country
+      created_at:
+        type: string
+        description: Date of registry creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last registry update in `Y-m-d H:i:s` format        
+
+  DefaultPaymentMethod:
+    type: object
+    properties:
+      data:
+        type: array
+        items: array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  GusCompanyData:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Company name
+          vatin:
+            type: string
+            description: Company vatin
+          regon:
+            type: string
+            description: Company regon
+          main_address_country:
+            type: string
+            description: Company address country
+          main_address_zip_code:
+            type: string
+            description: Company address zip code
+          main_address_city:
+            type: string
+            description: Company address city
+          main_address_street:
+            type: string
+            description: Company address street
+          main_address_number:
+            type: string
+            description: Company address street number
+          phone:
+            type: string
+            description: Company phone
+          email:
+            type: string
+            description: Company email
+          website:
+            type: string
+            description: Company website
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

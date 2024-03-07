@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>System documentation</title>
+  <link rel="icon" type="image/png" href="images/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="images/favicon-16x16.png" sizes="16x16" />
+  <link href='css/typography.css' media='screen' rel='stylesheet' type='text/css'/>
+  <link href='css/reset.css' media='screen' rel='stylesheet' type='text/css'/>
+  <link href='css/screen.css' media='screen' rel='stylesheet' type='text/css'/>
+  <link href='css/reset.css' media='print' rel='stylesheet' type='text/css'/>
+  <link href='css/print.css' media='print' rel='stylesheet' type='text/css'/>
+  <script src='lib/jquery-1.8.0.min.js' type='text/javascript'></script>
+  <script src='lib/jquery.slideto.min.js' type='text/javascript'></script>
+  <script src='lib/jquery.wiggle.min.js' type='text/javascript'></script>
+  <script src='lib/jquery.ba-bbq.min.js' type='text/javascript'></script>
+  <script src='lib/handlebars-2.0.0.js' type='text/javascript'></script>
+  <script src='lib/underscore-min.js' type='text/javascript'></script>
+  <script src='lib/backbone-min.js' type='text/javascript'></script>
+  <script src='swagger-ui.js' type='text/javascript'></script>
+  <script src='lib/highlight.7.3.pack.js' type='text/javascript'></script>
+  <script src='lib/marked.js' type='text/javascript'></script>
+  <script src='lib/swagger-oauth.js' type='text/javascript'></script>
+
+  <!-- Some basic translations -->
+  <!-- <script src='lang/translator.js' type='text/javascript'></script> -->
+  <!-- <script src='lang/ru.js' type='text/javascript'></script> -->
+  <!-- <script src='lang/en.js' type='text/javascript'></script> -->
+
+  <script type="text/javascript">
+    $(function () {
+
+      const options = [
+        ["/doc/activation.yaml", "Activation"],
+        ["/doc/auth.yaml", "Authorization"],
+        ["/doc/cash-flows.yaml", "Cash Flows"],
+        ["/doc/clipboard.yaml", "Clipboard"],
+        ["/doc/companies.yaml", "Companies"],
+        ["/doc/packages.yaml", "Company packages"],
+        ["/doc/company-services.yaml", "Company services"],
+        ["/doc/company-tokens.yaml", "Company tokens"],
+        ["/doc/contractors.yaml", "Contractors"],
+        ["/doc/invoice-formats.yaml", "CreateInvoice formats"],
+        ["/doc/invoice-payments.yaml", "CreateInvoice payments"],
+        ["/doc/invoice-types.yaml", "CreateInvoice types"],
+        ["/doc/dashboard.yaml", "Dashboard"],
+        ["/doc/errors.yaml", "Error logs"],
+        ["/doc/files.yaml", "Files"],
+        ["/doc/gantt.yaml", "Gantt"],
+        ["/doc/integrations.yaml", "Integrations"],
+        ["/doc/invitations.yaml", "Invitations"],
+        ["/doc/invoices.yaml", "Invoices"],
+        ["/doc/invoice-margin-procedures.yaml", "Invoice margin procedures"],
+        ["/doc/invoice-reverse-charges.yaml", "Invoice Reverse Charges"],
+        ["/doc/invoice-correction-types.yaml", "Invoice correction types"],
+        ["/doc/invoice-payments.yaml", "CreateInvoice payments"],
+        ["/doc/invoice-types.yaml", "CreateInvoice types"],
+        ["/doc/notification.yaml", "Notification"],
+        ["/doc/invoice-filters.yaml", "Invoice filters"],
+        ["/doc/jpk.yaml", "JPK"],
+        ["/doc/knowledge.yaml", "Knowledge"],
+        ["/doc/module.yaml", "Module"],
+        ["/doc/notification.yaml", "Notification"],
+        ["/doc/online-sales.yaml", "Online Sales"],
+        ["/doc/packages.yaml", "Packages"],
+        ["/doc/payments.yaml", "Payments"],
+        ["/doc/payment-methods.yaml", "Payment methods"],
+        ["/doc/password-reset.yaml", "Password reset"],
+        ["/doc/projects.yaml", "Projects"],
+        ["/doc/receipts.yaml", "Receipts"],
+        ["/doc/reports.yaml", "Reports"],
+        ["/doc/roles.yaml", "Roles"],
+        ["/doc/sprints.yaml", "Sprints"],
+        ["/doc/statuses.yaml", "Statuses"],
+        ["/doc/stories.yaml", "Stories"],
+        ["/doc/tax-offices.yaml", "Tax offices"],
+        ["/doc/tickets.yaml", "Tickets"],
+        ["/doc/ticket-realization.yaml", "Tickets realizations"],
+        ["/doc/ticket-types.yaml", "Ticket types"],
+        ["/doc/time-tracker.yaml", "Time tracker"],
+        ["/doc/users.yaml", "Users"],
+        ["/doc/projects-users.yaml", "Users in Projects"],
+        ["/doc/user-availability.yaml", "User availability"],
+        ["/doc/vat-rates.yaml", "Vat rates"],
+        ["/doc/vat-release-reasons.yaml", "Vat release reasons"],
+
+      ];
+
+      options.sort((a, b) => a[1].localeCompare(b[1]));
+
+      const selectElement = document.getElementById("file");
+
+      options.forEach((option) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = option[0];
+        optionElement.textContent = option[1];
+        selectElement.appendChild(optionElement);
+      });
+
+      var url = window.location.search.match(/url=([^&]+)/);
+      if (url && url.length > 1) {
+        url = decodeURIComponent(url[1]);
+      } else {
+        url = "http://petstore.swagger.io/v2/swagger.json";
+      }
+
+      // Pre load translate...
+      if(window.SwaggerTranslator) {
+        window.SwaggerTranslator.translate();
+      }
+      window.swaggerUi = new SwaggerUi({
+        url: '/doc/auth.yaml',
+        validatorUrl : null,
+        dom_id: "swagger-ui-container",
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+        onComplete: function(swaggerApi, swaggerUi){
+          if(typeof initOAuth == "function") {
+            initOAuth({
+              clientId: "your-client-id",
+              clientSecret: "your-client-secret",
+              realm: "your-realms",
+              appName: "your-app-name",
+              scopeSeparator: ","
+            });
+          }
+
+          if(window.SwaggerTranslator) {
+            window.SwaggerTranslator.translate();
+          }
+
+          $('pre code').each(function(i, e) {
+            hljs.highlightBlock(e)
+          });
+        },
+        onFailure: function(data) {
+          log("Unable to Load SwaggerUI");
+        },
+        docExpansion: "list",
+        apisSorter: "alpha",
+        showRequestHeaders: false
+      });
+
+      window.swaggerUi.load();
+
+      function log() {
+        if ('console' in window) {
+          console.log.apply(console, arguments);
+        }
+      }
+  });
+    function changeAddr() {
+      $("#input_baseUrl").val(window.location.protocol + "//" + window.location.host + $("#file").val());
+    }
+  </script>
+</head>
+
+<body class="swagger-section">
+<div id='header'>
+  <div class="swagger-ui-wrap">
+    <a id="logo" href="/api/">API</a>
+    <form id='api_selector'>
+      <div class='input'>
+        <select id="file" onchange="changeAddr()">
+        </select>
+        <input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="hidden"/>
+      </div>
+      <div class='input'><input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="hidden"/></div>
+      <div class='input'><a id="explore" href="#" data-sw-translate>Explore</a></div>
+    </form>
+  </div>
+</div>
+
+<div id="message-bar" class="swagger-ui-wrap" data-sw-translate>&nbsp;</div>
+<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+</body>
+</html>

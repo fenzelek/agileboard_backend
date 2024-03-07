@@ -1,0 +1,520 @@
+swagger: '2.0'
+info:
+  title: Cash flows
+  description: Manage cash flows
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /cash-flows:
+    post:
+      summary: Add cash flow
+      description: |
+        Add new cash flow for selected company.
+      tags:
+        - Cash flow
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: document_id
+          in: formData
+          description: Id of `receipt` or `invoice`
+          required: false
+          type: integer
+        - name: document_type
+          in: formData
+          description: Type of item (`receipt`/`invoice`)
+          required: false
+          type: string
+        - name: amount
+          in: formData
+          description: Amount of cash flow
+          required: true
+          type: integer
+        - name: direction
+          in: formData
+          description: Direction of cash flow `(initial, in, out, final)`
+          required: true
+          type: string
+        - name: description
+          in: formData
+          description: Description of cash flow
+          required: false
+          type: string
+        - name: flow_date
+          in: formData
+          description: Date of create cash flow use for filter(`Y-m-d` format)
+          required: true
+          type: string
+        - name: cashless
+          in: formData
+          description: Type of payment type (cash or cashless)
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: Cash flow was succesfully saved
+          schema:
+              $ref: "#/definitions/CashFlow"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    get:
+      summary: Display list of cash flows
+      description: |
+        Display list of cash flows for selected company.
+      tags:
+        - Cash flow
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add cash flow
+          required: true
+          type: integer
+        - name: date
+          in: query
+          description: Date of create cash flow use for filter(`Y-m-d` format)
+          required: true
+          type: string
+        - name: balanced
+          in: query
+          description: If set to `1` data will be balanced (some records will contain amount and direction based on other records)
+          required: false
+          type: string
+        - name: cashless
+          in: formData
+          description: Type of payment type (cash or cashless)
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: Cash flows with parameters
+          schema:
+              $ref: "#/definitions/PaginationIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /cash-flows/{id}:
+    put:
+      summary: Update cash flow
+      description: |
+        Update cash flow for selected company.
+      tags:
+        - Cash flow
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Cash flow ID
+          required: true
+          type: string
+        - name: cashless
+          in: formData
+          description: Type of payment type (cash or cashless)
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: Cash flow was succesfully saved
+          schema:
+              $ref: "#/definitions/CashFlowUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /cash-flows/pdf:
+    get:
+      summary: Retrieve all cash flows and return pdf
+      description:
+        Retrieve all cash flows to dedicate company and return pdf.
+      tags:
+        - Cash flow
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add cash flow
+          required: true
+          type: integer
+        - name: date
+          in: query
+          description: Date of create cash flow use for filter(`Y-m-d` format)
+          required: true
+          type: string
+        - name: cashless
+          in: query
+          description: Type of payment type (cash or cashless)
+          required: true
+          type: boolean
+        - name: balanced
+          in: query
+          description: If set to `1` data will be balanced (some records will contain amount and direction based on other records)
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: Pdf file
+          schema:
+              type: file
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /cash-flows/{id}/pdf:
+    get:
+      summary: Retrieve one cash flow and return pdf
+      description:
+        Retrieve one cash flow to dedicate company and return pdf.
+      tags:
+        - Cash flow
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: Id of cash flow
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Pdf file
+          schema:
+              type: file
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /reports/cash-flows:
+    get:
+      summary: Display report for cash flows
+      description: |
+        Display detail report about amounts for cash flows.
+      tags:
+        - Cash flow report
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company that will be updated
+          required: true
+          type: integer
+        - name: user_id
+          in: query
+          description: Id of user who add cash flow
+          required: true
+          type: integer
+        - name: date
+          in: query
+          description: Date of issue the cash flow use for filter(`Y-m-d` format)
+          required: true
+          type: string
+        - name: cashless
+          in: formData
+          description: Type of payment type (cash or cashless)
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: Cash flows report
+          schema:
+              $ref: "#/definitions/SuccessCashFlowsReportIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  CashFlowUpdateResponse:
+      type: object
+
+      properties:
+        data:
+          type: string
+          description: It will be empty array
+        exec_time:
+          type: number
+          format: float
+          description: API execution time
+
+  CashFlow:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Company service id
+      company_id:
+        type: number
+        format: int
+        description: Id of company for which this cash flow belongs to
+      user_id:
+        type: number
+        format: int
+        description: Id of user who add cash flow
+      receipt_id:
+        type: number
+        format: int
+        description: Id of receipt assigned to this cash flow
+      amount:
+        type: number
+        format: int
+        description: Amount of cash flow
+      direction:
+        type: string
+        description: Direction of cash flow `(initial, in, out, final)`
+      description:
+        type: string
+        description: Description of cash flow
+      flow_date:
+        type: string
+        description: Date of create cash flow use for filter(`Y-m-d` format)
+      cashless:
+        type: boolean
+        description: Type of payment type (cash or cashless)
+      balanced:
+        type: boolean
+        description: Whether amount and direction is calculation based on other records. By default it's false but when you get balanced list of cash flows some of them might be balanced
+      created_at:
+        type: string
+        description: Date of cash flow created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last cash flow updated in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted cash flow in `Y-m-d H:i:s` format or null
+      receipt:
+          $ref: "#/definitions/SelectedReceiptStructure"
+      invoice:
+          $ref: "#/definitions/SelectedInvoiceStructure"
+
+  SelectedReceiptStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Receipt data
+        items:
+            $ref: "#/definitions/Receipt"
+
+  SelectedInvoiceStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: CreateInvoice data
+        items:
+            $ref: "#/definitions/CreateInvoice"
+
+  Receipt:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt id
+      number:
+        type: integer
+        description: Receipt number
+      transaction_number:
+        type: string
+        description: Unique receipt number
+      user_id:
+        type: integer
+        description: Id user who added receipt
+      company_id:
+        type: integer
+        description: Id company, to which receipt was added
+      sale_date:
+        type: string
+        description: Date of issue the receipt (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: Receipt net price
+      price_gross:
+        type: number
+        description: Receipt gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      created_at:
+        type: string
+        description: Date of receipt creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last receipt update in `Y-m-d H:i:s` format
+
+  CreateInvoice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+
+  SuccessCashFlowsReportIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/CashFlowsReport"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  PaginationIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/CashFlow"
+      meta:
+        type: object
+        properties:
+          pagination:
+            $ref: "#/definitions/Pagination"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Pagination:
+    type: object
+    properties:
+      total:
+        type: number
+        format: integer
+        description: Total number of results
+      count:
+        type: number
+        format: integer
+        description: Number of returned results
+      per_page:
+        type: number
+        format: integer
+        description: Number of results per page
+      current_page:
+        type: number
+        format: integer
+        description: Number of current page
+      total_pages:
+        type: number
+        format: integer
+        description: Total number of pages
+      links:
+        $ref: "#/definitions/Links"
+
+  Links:
+    type: object
+    properties:
+      previous:
+        type: string
+        description: Relative link for previous page or results (present only if there's previous page of results)
+      next:
+        type: string
+        description: Relative link for next page or results  (present only if there's next page of results)
+
+  CashFlowsReport:
+    type: object
+    properties:
+      cash_initial_sum:
+        type: number
+        format: float
+        description: Initial amount sum
+      cash_in_sum:
+        type: number
+        format: float
+        description: In amount sum
+      cash_out_sum:
+        type: number
+        format: float
+        description: Out amount sum
+      cash_final_sum:
+        type: number
+        format: float
+        description: Final amount sum
+      calc_final_sum:
+        type: number
+        format: float
+        description: Final amount calculated from values
+      equals_final_sum:
+        type: boolean
+        format: boolean
+        description: Whether calculated final value is equal with entered
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

@@ -1,0 +1,78 @@
+swagger: '2.0'
+info:
+  title: Invoice margin procedures
+  description: Display available invoice margin procedures
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json  
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-margin-procedures:
+    get:
+      summary: Display list of invoice margin procedures
+      description: |
+        Displays list of available invoice margin procedures.
+      tags:
+        - Invoice Margin Procedures
+      responses:
+        200:
+          description: Invoice Margin Procedures list
+          schema: 
+              $ref: "#/definitions/SuccessInvoiceMarginProceduresIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema: 
+              $ref: "#/definitions/ErrorResponse"
+                      
+definitions:
+  SuccessInvoiceMarginProceduresIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceMarginProcedure"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+      
+  InvoiceMarginProcedure:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Invoice Margin Procedure id
+      slug:
+        type: string
+        description: Invoice Margin Procedure name
+      description:
+        type: string
+        description: Invoice Margin Procedure format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items: 
+          type: string
+      exec_time:
+        type: number
+        format: float 
+        description: API execution time

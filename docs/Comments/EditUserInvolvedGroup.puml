@@ -1,0 +1,21 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+'left to right direction
+title Edit user 'Involved' group in Task/Document \n
+
+
+(Add user to 'Involved' group) as (Add)
+(Remove User from 'Involved' group) as (Remove)
+
+User -> (Add)
+User --> (Remove)
+
+note "Available for users\n associate with Project" as N1
+(Add) .. N1
+N1 .. (Remove)
+
+note "Each user associated \n with Project can Add/Remove" as N2
+(Add) .. N2
+N2 .. (Remove)
+@enduml
+

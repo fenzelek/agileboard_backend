@@ -1,0 +1,35 @@
+@startuml
+title Add Notification
+
+start
+
+    note right: INTERACTION: {\n AUTH_ID\n SOURCE\n ID_SOURCE\n ID_PROJECT\n EVENT_TYPE\n  INTERACTION_PINGS: [\n  {\n     USER_ID/GROUP\n     LABEL\n     NOTIFABLE\n     'ZAJAWKA'\n   }]\n}
+    if (\nIs interaction table empty?\n) then (yes)
+
+        if (\n Is Comment\n) then (yes)
+            :Review policies;
+            note left: By source
+            note right: NOTIFY TABLE:\nAUTH_ID\nSOURCE\nSOURCE_ID\nEVENT_TYPE\nNOTIFY_ID\nPOLICY_NAME
+            :Check duplicate;
+            note right: Remove duplicates \n(only first remains)
+
+        else (no)
+            stop
+        endif
+
+    else (no)
+        repeat
+            if (\n Is for group notification? \n) then (yes)
+                :Lookup users;
+            else (no)
+            endif
+                repeat
+                    :Create notification;
+                    note left: NOTIFICATION_PING:\nAUTH_ID\nNOTIFY_ID\nEVENT_TYPE\nACTION_TYPE\nSOURCE\nSOURCE_ID\nPROJECT_ID\nINTERACTION_PINGS -> LABEL\nINTERACTION_PINGS -> MESSAGE (ZAJAWKA)
+                repeat while (more users? ) is (yes)
+        repeat while (more interaction? ) is (yes)
+    endif
+
+stop
+
+@enduml

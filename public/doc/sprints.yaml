@@ -1,0 +1,768 @@
+swagger: '2.0'
+info:
+  title: Sprints
+  description: Display and manage sprints
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /projects/{project_id}/sprints:
+    get:
+      summary: List sprints
+      description: |
+        List sprints.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: status
+          in: query
+          description: Possible values - inactive, active, closed, not-closed
+          required: false
+          type: string
+        - name: stats
+          in: query
+          description: Possible values - no, min, all - def. no
+          required: false
+          type: string
+        - name: with_backlog
+          in: query
+          description: If parameter set to `1`, return backlog too
+          required: false
+          type: boolean
+        - name: story_ids
+          in: query
+          description: Ids of stories (for filtering stats)
+          required: false
+          type: array
+        - name: hidden
+          in: query
+          description: Get only not hidden records (only for list ticket, not for stats)
+          required: false
+          type: boolean
+        - name: search
+          in: query
+          description: Name or title of tickets. Partial match will be done if given (only for list ticket, not for stats)
+          type: string
+          required: false
+      responses:
+        201:
+          description: List of sprints
+          schema:
+            $ref: "#/definitions/SprintIndexResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Create new sprint
+      description: |
+        Create new sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Sprint name
+          required: true
+          type: string
+        - name: planned_activation
+          in: formData
+          description: Planned activation datatime in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: planned_closing
+          in: formData
+          description: Planned closing datatime in format Y-m-d H:i:s
+          required: true
+          type: string
+      responses:
+        201:
+          description: Sprint was succesfully saved
+          schema:
+            $ref: "#/definitions/SprintSavedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/export:
+    get:
+      summary: Export sprint
+      description: |
+        Export sprint tickets to csv
+      tags:
+        - Sprint
+      parameters:
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Xlsx of sprint tickets
+
+
+  /projects/{project_id}/sprints/{sprint_id}:
+    put:
+      summary: Update sprint
+      description: |
+        Update sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Sprint name
+          required: true
+          type: string
+        - name: planned_activation
+          in: formData
+          description: Planned activation datatime in format Y-m-d H:i:s
+          required: true
+          type: string
+        - name: planned_closing
+          in: formData
+          description: Planned closing datatime in format Y-m-d H:i:s
+          required: true
+          type: string
+      responses:
+        200:
+          description: Sprint was succesfully saved
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      summary: Delete sprint
+      description: |
+        Delete sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        204:
+          description: Sprint was succesfully deleted
+          schema:
+            $ref: "#/definitions/SprintDeletedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Sprint has tickets. As code you will get `sprint.not_empty`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/activate:
+    put:
+      summary: Activate sprint
+      description: |
+        Update sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Sprint was already activated once. As code you will get `sprint.invalid_current_status`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/pause:
+    put:
+      summary: Pause sprint
+      description: |
+        Update sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Only active sprints can be paused. As code you will get `sprint.invalid_current_status`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/resume:
+    put:
+      summary: Resume paused sprint
+      description: |
+        Update sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Only paused sprints can be resumed. As code you will get `sprint.invalid_current_status`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/lock:
+    put:
+      summary: Lock sprint
+      description: |
+        Lock sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully locked
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/unlock:
+    put:
+      summary: Unlock sprint
+      description: |
+        Unlock sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully locked
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /projects/{project_id}/sprints/{sprint_id}/close:
+    put:
+      summary: Close sprint
+      description: |
+        Update sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: formData
+          description: Id sprint or null (backlog) where undone tasks will be moved.
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sprint was succesfully updated
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Sprint was already close once. As code you will get `sprint.invalid_current_status`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/sprints/{sprint_id}/clone:
+    post:
+      summary: Clone sprint
+      description: |
+        Clone sprint.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_id
+          in: path
+          description: Current sprint id
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: New name of cloned sprint
+          required: true
+          type: string
+        - name: activated
+          in: formData
+          description: Is cloned sprint should be activated or not?
+          required: true
+          type: boolean
+      responses:
+        200:
+          description: Sprint was succesfully cloned
+          schema:
+            $ref: "#/definitions/SprintUpdatedResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /projects/{project_id}/sprints/change-priority:
+    put:
+      summary: Change priority sprints
+      description: |
+        Change priority sprints.
+      tags:
+        - Sprint
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Current company id
+          required: true
+          type: integer
+        - name: project_id
+          in: path
+          description: Current project id
+          required: true
+          type: integer
+        - name: sprint_ids
+          in: formData
+          description: Ids sprints not closed in a reorder.
+          required: true
+          type: array
+          items:
+            type: integer
+      responses:
+        200:
+          description: Sprints was succesfully updated
+          schema:
+            $ref: "#/definitions/SprintchangePriorityResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way) or `company.creation_limit` (if user reached limit of companies he can create)
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+
+definitions:
+  SprintIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/SprintWithDetails"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SprintSavedResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Sprint"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SprintUpdatedResponse:
+    type: object
+
+    properties:
+      data:
+        $ref: "#/definitions/Sprint"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SprintDeletedResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+  SprintchangePriorityResponse:
+    type: object
+
+    properties:
+      data:
+        type: string
+        description: It will be empty array
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Sprint:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Sprint id
+      name:
+        type: string
+        description: Sprint name
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      status:
+        type: string
+        description: inactive/active/closed
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      planned_activation:
+        type: string
+        description: Date of planned activation in `Y-m-d H:i:s` format
+      planned_closing:
+        type: string
+        description: Date of planned closing in `Y-m-d H:i:s` format
+      activated_at:
+        type: string
+        description: Date of activated in `Y-m-d H:i:s` format
+      closed_at:
+        type: string
+        description: Date of closed in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last update in `Y-m-d H:i:s` format
+
+  SprintWithDetails:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Sprint id
+      name:
+        type: string
+        description: Sprint name
+      project_id:
+        type: number
+        format: int
+        description: Project id
+      status:
+        type: string
+        description: inactive/active/closed
+      priority:
+        type: number
+        format: int
+        description: Order in list
+      locked:
+        type: boolean
+        description: Is sprint locked
+      planned_activation:
+        type: string
+        description: Date of planned activation in `Y-m-d H:i:s` format
+      planned_closing:
+        type: string
+        description: Date of planned closing in `Y-m-d H:i:s` format
+      activated_at:
+        type: string
+        description: Date of activated in `Y-m-d H:i:s` format
+      closed_at:
+        type: string
+        description: Date of closed in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last contractor update in `Y-m-d H:i:s` format
+      stats:
+        type: object
+        description: Sprint stats
+        properties:
+          data:
+            type: object
+            properties:
+              tickets_count:
+                type: number
+                format: int
+                description: Number of tickets in sprint
+              tickets_estimate_time:
+                type: number
+                format: int
+                description: Estimate in seconds of all sprint's tickets
+              tracked_summary:
+                type: number
+                format: int
+                description: Time in seconds of all tracked activities in this sprint
+              activity_summary:
+                type: number
+                format: int
+                description: Time in seconds of all user activities for  activities in this sprint
+              activity_level:
+                type: number
+                format: int
+                description: Users activity level in percentage
+              time_usage:
+                type: number
+                format: int
+                description: Amount of used estimated time (in percentage)
+              un_started_estimations:
+                type: number
+                format: int
+                description: un started estimation - without task with activites and task in progress
+              expected_final:
+                type: number
+                format: int
+                description: Expected time at the end of sprint
+              estimation_left:
+                type: number
+                format: int
+                description: tickets_estimate_time - tracked_summary
+              attitude_to_initial:
+                type: number
+                format: int
+                description: attitude tickets_estimate_time to expected_final
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

@@ -1,0 +1,2060 @@
+swagger: '2.0'
+info:
+  title: Invoices
+  description: Add invoice and correction invoice and export to Pdf.
+  version: "1.0.0"
+# the domain of the service
+host: cep.app
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoices:
+    get:
+      summary: Display invoices
+      description: |
+        Display of invoices together with soft deleted. Depending on select company
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which invoices are displayed
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Id of invoice
+          required: false
+          type: integer
+        - name: number
+          in: query
+          description: Number of invoice
+          required: false
+          type: string
+        - name: contractor_id
+          in: query
+          description: Id of contractor invoice
+          required: false
+          type: integer
+        - name: contractor
+          in: query
+          description: Name contractor or number vatin
+          required: false
+          type: string
+        - name: drawer_id
+          in: query
+          description: Id of drawer invoice
+          required: false
+          type: integer
+        - name: status
+          in: query
+          description: Status of invoice (`all`, `paid`, `not_paid`, `paid_late`, `deleted`)
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: proforma_id
+          in: query
+          description: Invoices with given proforma_id
+          required: false
+          type: integer
+        - name: invoice_type_id
+          in: query
+          description: Filter invoices with given type id
+          required: false
+          type: integer
+        - name: invoice_registry_id
+          in: query
+          description: Filter invoices with given registry id
+          required: false
+          type: integer
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `number`, `order_number`, `sale_date`, `issue_date`, `price_net`, `price_gross`, `payment_left`, `created_at`, `updated_at`), Example=id,-price_net
+          required: false
+          type: integer
+      responses:
+        200:
+          description: CreateInvoice list
+          schema:
+              $ref: "#/definitions/InvoiceCompaniesResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    post:
+      summary: Add new invoice
+      description: |
+        Add new invoice to dedicate company.
+      tags:
+        - Invoices
+      parameters:
+        - name: extra_item_id
+          in: formData
+          description: Ids of `receipt` or `online sale`. One or many.
+          required: false
+          type: array
+          items:
+            type: integer
+        - name: extra_item_type
+          in: formData
+          description: Type of item (`receipts`/`online_sales`)
+          required: false
+          type: string
+        - name: sale_date
+          in: formData
+          description: Date of sale service (`Y-m-d` format) - unnecessary for correction
+          required: true
+          type: string
+        - name: issue_date
+          in: formData
+          description: Date of issue the invoice (`Y-m-d` format)
+          required: true
+          type: string
+        - name: price_net
+          in: formData
+          description: Net price of invoice (for no vat payers have to be the same as price brutto)
+          required: true
+          type: number
+        - name: price_gross
+          in: formData
+          description: Gross price of invoice
+          required: true
+          type: number
+        - name: vat_sum
+          in: formData
+          description: Tax amount of invoice (for `no vat payers` have to be zero)
+          required: true
+          type: number
+        - name: payment_term_days (for cash and card payment must to be issue_date + payment_term_days equal to current date, for Advance Invoice must be `0`)
+          in: formData
+          description: Payment term of invoice (number of days)
+          required: true
+          type: number
+        - name: contractor_id
+          in: formData
+          description: Contractor which get invoice (in case correction the same as corrected invoice).
+          required: true
+          type: number
+        - name: delivery_address_id
+          in: formData
+          description: Delivery Address (required only if adding delivery addresses module enabled and invoice type other than correction)
+          required: true
+          type: integer
+        - name: default_delivery
+          in: formData
+          description: Default delivery flag(required only if adding delivery addresses module enabled and invoice type other than correction)
+          required: true
+          type: boolean
+        - name: payment_method_id
+          in: formData
+          description: Method of payment.
+          required: true
+          type: number
+        - name: bank_account_id
+          in: formData
+          description: Chosen Bank Account Id (required for postponed payment methods).
+          required: false
+          type: number
+        - name: invoice_type_id
+          in: formData
+          description: Type of invoice.
+          required: true
+          type: number
+        - name: gross_counted
+          in: formData
+          description: Counting procedures of invoice, netto/brutto (in case correction the same as corrected invoice, for `no vat payers` have to be brutto).
+          required: true
+          type: boolean
+        - name: description
+          in: formData
+          description: Invoice description (max. 1000 chars)
+          required: false
+          type: string
+        - name: invoice_registry_id
+          in: formData
+          description: Id of registry. For correction ivoice has to be the same as in corected invoice.
+          required: true
+          type: number
+        - name: corrected_invoice_id
+          in: formData
+          description: Id invoice which is corrected (only for correction).
+          required: true
+          type: number
+        - name: correction_type
+          in: formData
+          description: CreateInvoice Correction type, available values for correction vat invoice `quantity, tax, price` but for correction margin and correction reverse charge invoice `quantity, price`. (parameter only for correction invoice).
+          required: true
+          type: string
+        - name: invoice_margin_procedure_id
+          in: formData
+          description: Margin procedure of invoice (only for invoice margin).
+          required: true
+          type: number
+        - name: invoice_type_id
+          in: formData
+          description: Type of invoice.
+          required: true
+          type: number
+        - name: proforma_id
+          in: formData
+          description: Proforma Id to be used as reference for issuing advance invoice.
+          required: true
+          type: number
+        - name: items
+          description:  CreateInvoice items
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/InvoiceItem"
+        - name: taxes
+          description:  CreateInvoice taxes summary
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/TaxItem"
+        - name: advance_taxes
+          description:   Advance taxes summary (only for Final Advance Invoice)
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/AdvanceTaxItem"
+        - name: special_payment
+          description: Passing this data will create special partial payment for a invoice
+          in: body
+          schema:
+            type: object
+            properties:
+              amount:
+                type: number
+                description: Amount of partial payment
+              payment_method_id:
+                type: number
+                description: Id of payment method. Must be card or cash.
+
+      responses:
+        201:
+          description: CreateInvoice was succesfully saved
+          schema:
+              $ref: "#/definitions/InvoiceSavedResponse"
+        423:
+          description: Duplicate invoice for single sale document error. As code you will get `invoices.duplicate_invoice_for_single_sale_document`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        421:
+          description: Corrected Company Service error. As code you will get `invoices.protect_correction_of_company_service`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        420:
+          description: CreateInvoice registry error. As code you will get `invoices.registry_not_found_or_ambiguous`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        424:
+          description: Invoice has other invoice e.g. correction. As code you will get `invoices.has_correction`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /invoices/pdf:
+    get:
+      summary: Export list of invoices
+      description: |
+        Export list of invoices to pdf.
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Id of invoice
+          required: false
+          type: integer
+        - name: number
+          in: query
+          description: Number of invoice
+          required: false
+          type: string
+        - name: contractor_id
+          in: query
+          description: Id of contractor invoice
+          required: false
+          type: integer
+        - name: contractor
+          in: query
+          description: Name contractor or number vatin
+          required: false
+          type: string
+        - name: drawer_id
+          in: query
+          description: Id of drawer invoice
+          required: false
+          type: integer
+        - name: status
+          in: query
+          description: Status of invoice (`all`, `paid`, `not_paid`, `paid_late`, `deleted`)
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `number`, `order_number`, `sale_date`, `issue_date`, `price_net`, `price_gross`, `payment_left`, `created_at`, `updated_at`), Example=id,-price_net
+          required: false
+          type: integer
+      responses:
+        200:
+          description: PDF file generated successfully.
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+  /invoices/zip:
+    get:
+      summary: Export list of invoices
+      description: |
+        Export list of invoices to pdf.
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company
+          required: true
+          type: integer
+        - name: id
+          in: query
+          description: Id of invoice
+          required: false
+          type: integer
+        - name: number
+          in: query
+          description: Number of invoice
+          required: false
+          type: string
+        - name: contractor_id
+          in: query
+          description: Id of contractor invoice
+          required: false
+          type: integer
+        - name: contractor
+          in: query
+          description: Name contractor or number vatin
+          required: false
+          type: string
+        - name: drawer_id
+          in: query
+          description: Id of drawer invoice
+          required: false
+          type: integer
+        - name: status
+          in: query
+          description: Status of invoice (`all`, `paid`, `not_paid`, `paid_late`, `deleted`)
+          required: false
+          type: string
+        - name: date_start
+          in: query
+          description: Start date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: date_end
+          in: query
+          description: End date of issue the invoice use for filter(`Y-m-d` format)
+          required: false
+          type: string
+        - name: sort
+          in: query
+          description: Sort order on columns (`id`, `number`, `order_number`, `sale_date`, `issue_date`, `price_net`, `price_gross`, `payment_left`, `created_at`, `updated_at`), Example=id,-price_net
+          required: false
+          type: integer
+      responses:
+        200:
+          description: Number of invoice in Package.
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        427:
+          description: Too much invoice in packages. As code you will get `invoices.package_buffer_overflow`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /invoices/{id}:
+    get:
+      summary: Display selected invoice
+      description: |
+        Displays selected invoice for company.
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: CreateInvoice id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: CreateInvoice
+          schema:
+              $ref: "#/definitions/SuccessInvoiceShowResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+    put:
+      summary: Update invoice
+      description: |
+        Update invoice for selected company. If invoice has receipt or online sale you can only edit issue date and contractor data.
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: CreateInvoice id
+          required: true
+          type: integer
+        - name: contractor_id
+          in: formData
+          description: Id of contractor
+          required: false
+          type: integer
+        - name: delivery_address_id
+          in: formData
+          description: Delivery Address (required only if adding delivery addresses module enabled and invoice type other than correction)
+          required: true
+          type: integer
+        - name: default_delivery
+          in: formData
+          description: Default delivery flag(required only if adding delivery addresses module enabled and invoice type other than correction)
+          required: true
+          type: boolean
+        - name: invoice_margin_procedure_id
+          in: formData
+          description: Margin procedure of invoice (only for invoice margin).
+          required: true
+          type: number
+        - name: invoice_reverse_charge_id
+          in: formData
+          description: Reverse Charge of invoice (only for invoice reverse charge).
+          required: true
+          type: number
+        - name: sale_date
+          in: formData
+          description: Sale date of invoice (`Y-m-d` format)
+          required: false
+          type: string
+        - name: issue_date
+          in: formData
+          description: Issue date of invoice (`Y-m-d` format)
+          required: false
+          type: string
+        - name: price_net (for `no var payers` have to be the same as price brutto)
+          in: formData
+          description: Net price of invoice
+          required: false
+          type: number
+        - name: price_gross
+          in: formData
+          description: Gross price of invoice
+          required: false
+          type: number
+        - name: vat_sum
+          in: formData
+          description: Vat sum of invoice (for `no var payers` have to be zero)
+          required: false
+          type: number
+        - name: payment_term_days (for Advance Invoice must be `0`)
+          in: formData
+          description: Payment term of invoice (number of days)
+          required: false
+          type: number
+        - name: payment_method_id
+          in: formData
+          description: Method ID of payment
+          required: false
+          type: number
+        - name: bank_account_id
+          in: formData
+          description: Chosen Bank Account Id (required for postponed payment methods).
+          required: false
+          type: number
+        - name: gross_counted
+          in: formData
+          description: Counting procedures of invoice, netto/brutto (in case correction the same as corrected invoice, for `no var payers` have to be brutto).
+          required: false
+          type: boolean
+        - name: description
+          in: formData
+          description: Invoice description (max. 1000 chars)
+          required: false
+          type: string
+        - name: items
+          description:  CreateInvoice items
+          required: false
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/InvoiceItem"
+        - name: taxes
+          description:  CreateInvoice taxes summery
+          required: false
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/TaxItem"
+        - name: advance_taxes
+          description:   Advance taxes summary (only for Final Advance Invoice)
+          required: true
+          in: body
+          schema:
+             type: array
+             items:
+                $ref: "#/definitions/AdvanceTaxItem"
+        - name: special_payment
+          description: Passing this data will create or update special partial payment for a invoice.
+            Not passing this data will delete special payment is one exists.
+          in: body
+          schema:
+            type: object
+            properties:
+              amount:
+                type: number
+                description: Amount of partial payment
+              payment_method_id:
+                type: number
+                description: Id of payment method. Must be card or cash.
+      responses:
+        200:
+          description: User updated
+          schema:
+              $ref: "#/definitions/SuccessInvoiceUpdateResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+    delete:
+      summary: Soft delete invoice
+      description: |
+        Soft delete invoice.
+      tags:
+        - Invoices
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Company ID
+          required: true
+          type: integer
+        - name: id
+          in: path
+          description: CreateInvoice ID
+          required: true
+          type: integer
+      responses:
+        204:
+          description: CreateInvoice deleted.
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        424:
+          description: Invoice has other invoice e.g. correction. As code you will get `invoices.has_correction`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page or he do not have the right to invoice. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /invoices/{id}/pdf:
+    get:
+      summary: Export invoice pdf
+      description: |
+        Export invoice, correction of invoice and duplicate of invoice to pdf.
+      tags:
+        - Invoices
+      parameters:
+        - name: id
+          in: path
+          description: CreateInvoice id
+          required: true
+          type: integer
+        - name: selected_company_id
+          in: query
+          description: Id of company for which receipts are retrieved
+          required: true
+          type: integer
+        - name: duplicate
+          in: query
+          description: If set to `1` it will be marked as duplicate in PDF.
+          required: false
+          type: boolean
+
+      responses:
+        200:
+          description: Pdf of invoice
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        424:
+          description: Duplicates for proforma invoice is not allowed. As code you will get `invoices.duplicate_for_proforma_is_not_allowed`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+  /invoices/{id}/send:
+    post:
+      summary: Send invoice pdf via email
+      description: |
+        Send invoice.
+      tags:
+        - Invoices
+      parameters:
+        - name: id
+          in: path
+          description: Invoice id
+          required: true
+          type: integer
+        - name: selected_company_id
+          in: query
+          description: Id of company for which invoice are retrieved
+          required: true
+          type: integer
+        - name: email
+          in: query
+          description: Email of person who is receiver message.
+          required: true
+          type: string
+
+      responses:
+        200:
+          description: Send email with invoice
+        422:
+          description: Validation error. As code you will get `general.validation_failed` (if fields are not filled in valid way)
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  SuccessInvoiceShowResponse:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/InvoiceIndexItem"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  SuccessInvoiceUpdateResponse:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/InvoiceUpdateItem"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoiceSavedResponse:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/CreateInvoice"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoiceIndexItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+      order_number:
+        type: integer
+        description: CreateInvoice number according with selected invoice format
+      invoice_registry_id:
+        type: integer
+        description: CreateInvoice registry
+      drawer_id:
+        type: integer
+        description: Id user who issue invoice
+      company_id:
+        type: integer
+        description: Id company, to which invoice was added
+      contractor_id:
+        type: integer
+        description: Id contractor
+      delivery_address_id:
+        type: integer
+        description: Id delivery address
+      default_delivery:
+        type: boolean
+        description: Default delivery flag
+      corrected_invoice_id:
+        type: integer
+        description: Id corrected invoice (empty for no correction)
+      correction_type:
+        type: string
+        description: CreateInvoice correction type (empty for no correction)
+      invoice_margin_procedure_id:
+        type: integer
+        description: Margin procedures id for invoice margin (empty for no invoice margin)
+      invoice_reverse_charge_id:
+        type: integer
+        description: Reverse charge id for invoice reverse (empty for no invoice reverse)
+      proforma_id:
+        type: integer
+        description: Proforma id for Advance Invoice (empty for no Advance Invoice)
+      sale_date:
+        type: string
+        description: Date of sale the service (`Y-m-d` format)
+      issue_date:
+        type: string
+        description: Date of issue the invoice (`Y-m-d` format)
+      invoice_type_id:
+        type: integer
+        description: CreateInvoice type
+      price_net:
+        type: number
+        description: CreateInvoice net price
+      price_gross:
+        type: number
+        description: CreateInvoice gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_left:
+        type: number
+        description: Payment left to pay
+      payment_term_days:
+        type: number
+        description: Left days of payment
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      paid_at:
+        type: string
+        description: Date of making payment
+      gross_counted:
+        type: boolean
+        description: Status of counting procedures of invoice
+      description:
+        type: string
+        description: Invoice description
+      last_printed_at:
+        type: string
+        description: Date of last printed invoice in `Y-m-d H:i:s` format
+      last_send_at:
+        type: string
+        description: Date of last send invoice in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of invoice created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice updated in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted invoice in `Y-m-d H:i:s` format or null
+      is_editable:
+        type: boolean
+        description: Invoice can be edited
+      items:
+          $ref: "#/definitions/InvoiceItemsStructure"
+      taxes:
+          $ref: "#/definitions/InvoiceTaxesStructure"
+      final_advance_taxes:
+          $ref: "#/definitions/InvoiceFinalAdvanceTaxesStructure"
+      invoice_company:
+          $ref: "#/definitions/InvoiceCompanyStructure"
+      invoice_contractor:
+          $ref: "#/definitions/InvoiceContractorStructure"
+      online_sales:
+          $ref: "#/definitions/InvoiceOnlineSalesStructure"
+      receipts:
+          $ref: "#/definitions/InvoiceReceiptsStructure"
+      special_payments:
+          $ref: "#/definitions/SpecialPaymentsStructure"
+      invoices:
+          $ref: "#/definitions/InvoiceInvoicesStructure"
+      invoice_delivery_address:
+          $ref: "#/definitions/InvoiceDeliveryAddressStructure"
+      delivery_address:
+          $ref: "#/definitions/DeliveryAddressStructure"
+      bank_account:
+          $ref: "#/definitions/BankAccountStructure"
+
+  SpecialPaymentsStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+              format: int
+              description: Id of payment
+            invoice_id:
+              type: number
+              format: int
+              description: Id of invoice attached to payment
+            amount:
+              type: number
+              format: int
+              description: Amount of payment
+            payment_method_id:
+              type: number
+              format: int
+              description: Id of payment method
+            special_partial_payment:
+              type: boolean
+              description: Tells if payment is special
+            register_id:
+              type: number
+              format: int
+              description: Id of user who register payment
+            created_at:
+              type: string
+              description: Date of payment creation in `Y-m-d H:i:s` format
+            updated_at:
+              type: string
+              description: Date of last payment update in `Y-m-d H:i:s` format
+            deleted_at:
+              type: string
+              description: Date of deleted payment in `Y-m-d H:i:s` format or null
+
+  InvoiceUpdateItem:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+      order_number:
+        type: integer
+        description: CreateInvoice number according with selected invoice format
+      invoice_registry_id:
+        type: integer
+        description: CreateInvoice registry
+      drawer_id:
+        type: integer
+        description: Id user who issue invoice
+      company_id:
+        type: integer
+        description: Id company, to which invoice was added
+      contractor_id:
+        type: integer
+        description: Id contractor
+      corrected_invoice_id:
+        type: integer
+        description: Id corrected invoice (empty for no correction)
+      correction_type:
+        type: string
+        description: CreateInvoice correction type (empty for no correction)
+      invoice_margin_procedure_id:
+        type: integer
+        description: Margin procedures id for invoice margin (empty for no invoice margin)
+      invoice_reverse_charge_id:
+        type: integer
+        description: Reverse Charge id for invoice reverse (empty for no invoice reverse)
+      proforma_id:
+        type: integer
+        description: Proforma id for Advance Invoice (empty for no Advance Invoice)
+      sale_date:
+        type: string
+        description: Date of sale the service (`Y-m-d` format)
+      issue_date:
+        type: string
+        description: Date of issue the invoice (`Y-m-d` format)
+      invoice_type_id:
+        type: integer
+        description: CreateInvoice type
+      price_net:
+        type: number
+        description: CreateInvoice net price
+      price_gross:
+        type: number
+        description: CreateInvoice gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_left:
+        type: number
+        description: Payment left to pay
+      payment_term_days:
+        type: number
+        description: Left days of payment
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      bank_account_id:
+        type: integer
+        description: Bank Account id
+      paid_at:
+        type: string
+        description: Date of making payment
+      gross_counted:
+        type: boolean
+        description: Status of counting procedures of invoice
+      description:
+        type: string
+        description: Invoice description
+      last_printed_at:
+        type: string
+        description: Date of last printed invoice in `Y-m-d H:i:s` format
+      last_send_at:
+        type: string
+        description: Date of last send invoice in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of invoice created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice updated in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted invoice in `Y-m-d H:i:s` format or null
+      invoice_company:
+          $ref: "#/definitions/InvoiceCompanyStructure"
+      invoice_contractor:
+          $ref: "#/definitions/InvoiceContractorStructure"
+
+  InvoiceItemsStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related items
+        items:
+            $ref: "#/definitions/InvoiceItems"
+
+  InvoiceTaxesStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related taxes
+        items:
+            $ref: "#/definitions/InvoiceTaxes"
+
+  InvoiceFinalAdvanceTaxesStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related taxes
+        items:
+            $ref: "#/definitions/InvoiceTaxes"
+
+  InvoiceCompanyStructure:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/InvoiceCompany"
+
+  InvoiceContractorStructure:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/InvoiceContractor"
+
+  InvoiceDeliveryAddressStructure:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/InvoiceDeliveryAddress"
+
+  DeliveryAddressStructure:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/DeliveryAddress"
+  BankAccountStructure:
+    type: object
+    properties:
+      data:
+          $ref: "#/definitions/BankAccount"
+
+  InvoiceReceiptsStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related online sales
+        items:
+          $ref: "#/definitions/InvoiceReceipts"
+
+  InvoiceOnlineSalesStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related online sales
+        items:
+            $ref: "#/definitions/InvoiceOnlineSales"
+
+  InvoiceInvoicesStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related invoices
+        items:
+            $ref: "#/definitions/InvoiceInvoices"
+
+  InvoiceItems:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice item
+      invoice_id:
+        type: integer
+        format: int
+        description: Id of invoice
+      company_service_id:
+        type: integer
+        format: int
+        description: Id of company service
+      pkwiu:
+        type: string
+        description: Pkwiu of company service
+      name:
+        type: string
+        description: Name of item
+      custom_name:
+        type: string
+        description: Custom name of item dedicate to current invoice
+      price_net:
+        type: number
+        format: float
+        description: Item net price
+      price_net_sum:
+        type: number
+        format: float
+        description: Sum item net price
+      price_gross:
+        type: number
+        format: float
+        description: Item gross price
+      price_gross_sum:
+        type: number
+        format: float
+        description: Sum item gross price
+      vat_rate:
+        type: string
+        description: Item tax name
+      vat_rate_id:
+        type: number
+        description: Item tax id
+      vat_sum:
+        type: number
+        format: float
+        description: Item tax amount
+      is_correction:
+        type: integer
+        description: If item is correction invoice
+      position_corrected_id:
+        type: integer
+        description: Id corrected invoice (only for corrected item).
+      proforma_item_id:
+        type: integer
+        description: Id Proforma Item corresponded with given item(only for Advance Invoice).
+      quantity:
+        type: number
+        description: Item quantity
+      service_unit_id:
+        description: Id of service unit
+        type: integer
+      print_on_invoice:
+        type: boolean
+        description: Determines if description will be shown on the invoice.
+      description:
+        type: string
+        description: Item description.
+      base_document_id:
+        description: For collective invoices. Describes for which receipt/online_sales it belongs.
+        type: integer
+      creator_id:
+        type: integer
+        description: Id user who added Item
+      editor_id:
+        type: integer
+        description: Id user who edit Item
+      created_at:
+        type: string
+        description: Date of item creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last item update in `Y-m-d H:i:s` format
+      paid:
+        type: object
+        properties:
+          data:
+            type: array
+            description: The Sum of payment through Advance Invoice (only for Proforma).
+            items:
+              $ref: "#/definitions/InvoiceItemPaid"
+      service_unit:
+        type: object
+        properties:
+          data:
+            $ref: "#/definitions/ServiceUnit"
+
+  ServiceUnit:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Id of service unit
+      name:
+        type: string
+        description: Service unit name
+      slug:
+        type: string
+        description: Service unit slug
+      created_at:
+        type: string
+        description: Date of unit creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last unit update in `Y-m-d H:i:s` format
+
+  InvoiceItemPaid:
+    type: object
+    properties:
+      net:
+        type: number
+        format: int
+        description: The Sum of net payment through Advance Invoice (only for Proforma, for other invoice type is null).
+      gross:
+        type: number
+        format: int
+        description: The Sum of gross payment through Advance Invoice (only for Proforma, for other invoice type is null).
+
+  InvoiceTaxes:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice tax
+      invoice_id:
+        type: integer
+        format: int
+        description: Id of invoice
+      vat_rate_id:
+        type: integer
+        format: int
+        description: Id of vat rate
+      price_net:
+        type: number
+        format: float
+        description: Tax net price
+      price_gross:
+        type: number
+        format: float
+        description: Tax gross price
+      created_at:
+        type: string
+        description: Date of tax creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last tax update in `Y-m-d H:i:s` format
+
+  InvoiceCompany:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice company
+      invoice_id:
+        type: integer
+        format: int
+        description: Id of invoice
+      company_id:
+        type: integer
+        format: int
+        description: Id of company
+      name:
+        type: string
+        description: CreateInvoice company name
+      vatin:
+        type: string
+        description: Vat number
+      email:
+        type: string
+        description: E-mail
+      phone:
+        type: string
+        description: Phone number
+      bank_name:
+        type: string
+        description: Bank name
+      bank_account_number:
+        type: string
+        description: Bank account number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      created_at:
+        type: string
+        description: Date of invoice company creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice company update in `Y-m-d H:i:s` format
+
+  InvoiceContractor:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice contractor
+      invoice_id:
+        type: integer
+        format: int
+        description: Id of invoice
+      contractor_id:
+        type: integer
+        format: int
+        description: Id of contractor
+      name:
+        type: string
+        description: CreateInvoice company name
+      vatin:
+        type: string
+        description: Vat number
+      email:
+        type: string
+        description: E-mail
+      phone:
+        type: string
+        description: Phone number
+      bank_name:
+        type: string
+        description: Bank name
+      bank_account_number:
+        type: string
+        description: Bank account number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      created_at:
+        type: string
+        description: Date of invoice contractor creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice contractor update in `Y-m-d H:i:s` format
+
+  InvoiceDeliveryAddress:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice contractor
+      invoice_id:
+        type: integer
+        format: int
+        description: Id of invoice
+      receiver_id:
+        type: integer
+        format: int
+        description: Id of receiver (in contractors table)
+      receiver_name:
+        type: string
+        description: Receiver company name
+      street:
+        type: string
+        description: Delivery address street
+      number:
+        type: string
+        description: Delivery address number
+      zip_code:
+        type: string
+        description: Delivery address zip code
+      city:
+        type: string
+        description: Delivery address city
+      country:
+        type: string
+        description: Delivery address country
+      created_at:
+        type: string
+        description: Date of invoice delivery address creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice delivery address update in `Y-m-d H:i:s` format
+
+  DeliveryAddress:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id contractor address
+      contractor_id:
+        type: integer
+        format: int
+        description: Id of contractor
+      name:
+        type: string
+        description: Name of address
+      type:
+        type: string
+        description: Type of address (ie. `delivery`)
+      street:
+        type: string
+        description: Contractor address street
+      number:
+        type: string
+        description: Contractor address number
+      zip_code:
+        type: string
+        description: Contractor address zip code
+      city:
+        type: string
+        description: Contractor address city
+      country:
+        type: string
+        description: Contractor address country
+      created_at:
+        type: string
+        description: Date of Contractor address creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last Contractor address update in `Y-m-d H:i:s` format
+
+  BankAccount:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id
+      bank_name:
+        type: string
+        description: Name of Bank
+      number:
+        type: string
+        description: Account number
+      default:
+        type: boolean
+        description: Default Bank Account Flag
+
+  InvoiceOnlineSales:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of online sale
+      number:
+        type: integer
+        format: int
+        description: Number of online sale
+
+  InvoiceReceipts:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice receipt
+      number:
+        type: integer
+        format: int
+        description: Number of invoice receipt
+
+  InvoiceInvoices:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Id of invoice
+      number:
+        type: integer
+        format: int
+        description: Number of invoice
+
+  CreateInvoice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: CreateInvoice number
+      order_number:
+        type: integer
+        description: CreateInvoice number according with selected invoice format
+      invoice_registry_id:
+        type: integer
+        description: CreateInvoice registry
+      drawer_id:
+        type: integer
+        description: Id user who issue invoice
+      company_id:
+        type: integer
+        description: Id company, to which invoice was added
+      contractor_id:
+        type: integer
+        description: Id contractor
+      corrected_invoice_id:
+        type: integer
+        description: Id corrected invoice (empty for no correction)
+      correction_type:
+        type: string
+        description: CreateInvoice correction type (empty for no correction)
+      invoice_margin_procedure_id:
+        type: integer
+        description: Margin procedures id for invoice margin (empty for no invoice margin)
+      invoice_reverse_charge_id:
+        type: integer
+        description: Reverse Charge id for invoice reverse (empty for no invoice reverse)
+      proforma_id:
+        type: integer
+        description: Proforma id for Advance Invoice (empty for no Advance Invoice)
+      sale_date:
+        type: string
+        description: Date of sale the service (`Y-m-d` format)
+      issue_date:
+        type: string
+        description: Date of issue the invoice (`Y-m-d` format)
+      invoice_type_id:
+        type: integer
+        description: CreateInvoice type
+      price_net:
+        type: number
+        description: CreateInvoice net price
+      price_gross:
+        type: number
+        description: CreateInvoice gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_left:
+        type: number
+        description: Payment left to pay
+      payment_term_days:
+        type: number
+        description: Left days of payment
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      bank_account_id:
+        type: integer
+        description: Bank Account id
+      paid_at:
+        type: string
+        description: Date of making payment
+      gross_counted:
+        type: boolean
+        description: Status of counting procedures of invoice
+      description:
+        type: string
+        description: Invoice description
+      last_printed_at:
+        type: string
+        description: Date of last printed invoice in `Y-m-d H:i:s` format
+      last_send_at:
+        type: string
+        description: Date of last send invoice in `Y-m-d H:i:s` format
+      created_at:
+        type: string
+        description: Date of invoice created in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice updated in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted invoice in `Y-m-d H:i:s` format or null
+      company:
+        ref: "#/definitions/CompanyInvoiceInvoiceStructure"
+      contractor:
+        ref: "#/definitions/InvoiceCompanyInvoiceContractorsStructure"
+      payment_method:
+        ref: "#/definitions/PaymentMethod"
+      invoice_contractor:
+        ref: "#/definitions/InvoiceContractorStructure"
+
+  InvoiceItem:
+    type: object
+    properties:
+      position_corrected_id:
+        description: Id corrected invoice (only for corrected item).
+        type: integer
+      company_service_id:
+        description: Company service sale (in case correction the same as corrected invoice item).
+        type: integer
+      price_net:
+        description: Unit net price of service sale (required if gross_counted false, for `no vat payers` have to be the same as price brutto)
+        type: number
+      price_net_sum:
+        description: Sum net price of service sale (for `no vat payers` have to be the same as price_brutto_sum)
+        type: number
+      price_gross:
+        description: Unit gross price of service sale (required if gross_counted true)
+        type: number
+      price_gross_sum:
+        description: Sum gross price of service sale
+        type: number
+      vat_rate_id:
+        description: Tax rate of service sale (for `no vat payers` have to be np).
+        type: number
+      vat_sum:
+        description: Sum tax amount of service sale (for `no vat payers` have to be zero)
+        type: number
+      quantity:
+        description: Quantity of service sale
+        type: integer
+      service_unit_id:
+        description: Id of service unit
+        type: integer
+      base_document_id:
+        description: For collective invoices. Describes for which receipt/online_sales it belongs.
+        type: integer
+      custom_name:
+        type: string
+        description: Custom name of item dedicate to current invoice, can be empty string
+      proforma_item_id:
+        type: integer
+        description: Id Proforma Item corresponded with given item(only for Advance Invoice).
+      paid:
+        type: object
+        properties:
+          data:
+            type: array
+            description: The Sum of payment through Advance Invoice (only for Proforma).
+            items:
+                $ref: "#/definitions/InvoiceItemPaid"
+
+  TaxItem:
+    type: object
+    properties:
+      price_net:
+        description: Net price for given tax rate (for `no var payers` have to be the same as price brutto)
+        type: number
+      price_gross:
+        description: Gross price for given tax rate
+        type: number
+      vat_rate_id:
+        description: Tax rate of service sale. (for `no var payers` have to be np)
+        type: number
+
+  AdvanceTaxItem:
+    type: object
+    properties:
+      price_net:
+        description: Net price for given tax rate (for `no var payers` have to be the same as price brutto)
+        type: number
+      price_gross:
+        description: Gross price for given tax rate
+        type: number
+      vat_rate_id:
+        description: Tax rate of service sale.(for `no var payers` have to be np)
+        type: number
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoiceCompaniesResponse:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/CompanyInvoice"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  CompanyInvoice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: string
+        description: Number of invoice
+      order_number:
+        type: number
+        format: int
+        description: Order number of invoice
+      invoice_registry_id:
+        type: number
+        format: int
+        description: Id of invoice registry belongs to invoice
+      drawer_id:
+        type: number
+        format: int
+        description: Id of drawer belongs to invoice
+      company_id:
+        type: number
+        format: int
+        description: Id of company belongs to invoice
+      contractor_id:
+        type: number
+        format: int
+        description: Id of contractor belongs to invoice
+      sale_date:
+        type: string
+        description: Sale date of invoice
+      issue_date:
+        type: string
+        description: Issue date of invoice
+      invoice_type_id:
+        type: number
+        format: int
+        description: Id of invoice type belongs to invoice
+      invoice_margin_procedure_id:
+        type: number
+        format: int
+        description: Margin procedures id for invoice margin (empty for no invoice margin)
+      invoice_reverse_charge_id:
+        type: number
+        format: int
+        description: Reverse charge id for invoice reverse (empty for no invoice reverse)
+      proforma_id:
+        type: integer
+        description: Proforma id for Advance Invoice (empty for no Advance Invoice)
+      price_net:
+        type: number
+        format: int
+        description: Price net of invoice
+      price_gross:
+        type: number
+        format: int
+        description: Price gross of invoice
+      vat_sum:
+        type: number
+        format: int
+        description: Vat sum of invoice
+      payment_left:
+        type: number
+        format: int
+        description: Payment left of invoice
+      payment_term_days:
+        type: number
+        format: int
+        description: Payment term days of invoice
+      payment_method_id:
+        type: number
+        format: int
+        description: Id of payment method belongs to invoice
+      bank_account_id:
+        type: integer
+        description: Bank Account id
+      paid_at:
+        type: string
+        description: Date payment of invoice
+      gross_counted:
+        type: number
+        format: int
+        description: Gross counted of invoice
+      description:
+        type: string
+        description: Invoice description
+      last_printed_at:
+        type: string
+        description: Date of last print invoice
+      last_send_at:
+        type: string
+        description: Date of last send invoice
+      created_at:
+        type: string
+        description: Date of create invoice in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of update invoice in `Y-m-d H:i:s` format
+      deleted_at:
+        type: string
+        description: Date of deleted invoice in `Y-m-d H:i:s` format or null
+      is_editable:
+        type: boolean
+        description: Invoice can be edited
+      drawer:
+        $ref: "#/definitions/CompanyInvoiceDrawer"
+      invoice_contractors:
+          $ref: "#/definitions/InvoiceCompanyInvoiceContractorsStructure"
+      receipts:
+          $ref: "#/definitions/ReceiptStructure"
+      online_sales:
+          $ref: "#/definitions/InvoiceOnlineSaleStructure"
+      invoices:
+          $ref: "#/definitions/CompanyInvoiceInvoiceStructure"
+
+  CompanyInvoiceInvoiceStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Related invoices
+        items:
+            $ref: "#/definitions/CompanyInvoiceInvoice"
+
+  CompanyInvoiceInvoice:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice id
+      number:
+        type: integer
+        description: CreateInvoice number
+
+  ReceiptStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Receipts data
+        items:
+          $ref: "#/definitions/CompanyInvoiceReceipt"
+
+  CompanyInvoiceReceipt:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Receipt id
+      number:
+        type: integer
+        description: Receipt number
+      transaction_number:
+        type: string
+        description: Unique receipt number
+      user_id:
+        type: integer
+        description: Id user who added receipt
+      company_id:
+        type: integer
+        description: Id company, to which receipt was added
+      sale_date:
+        type: string
+        description: Date of issue the receipt (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: Receipt net price
+      price_gross:
+        type: number
+        description: Receipt gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      bank_account_id:
+        type: integer
+        description: Bank Account id
+      created_at:
+        type: string
+        description: Date of receipt creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last receipt update in `Y-m-d H:i:s` format
+
+  InvoiceOnlineSaleStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: Online sales data
+        items:
+          $ref: "#/definitions/CompanyInvoiceOnlineSale"
+
+  CompanyInvoiceOnlineSale:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: OnlineSale id
+      number:
+        type: integer
+        description: OnlineSale number
+      transaction_number:
+        type: string
+        description: Unique online sale number
+      email:
+        type: string
+        description: Customer email
+      company_id:
+        type: integer
+        description: Id company, to which online sale was added
+      sale_date:
+        type: string
+        description: Date of issue the online sale (`Y-m-d H:i:s` format)
+      price_net:
+        type: number
+        description: OnlineSale net price
+      price_gross:
+        type: number
+        description: OnlineSale gross price
+      vat_sum:
+        type: number
+        description: Tax amount
+      payment_method_id:
+        type: integer
+        description: Payment method id
+      bank_account_id:
+        type: integer
+        description: Bank Account id
+      created_at:
+        type: string
+        description: Date of online sale creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last online sale update in `Y-m-d H:i:s` format
+
+  CompanyInvoiceDrawer:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Drawer id
+      first_name:
+        type: string
+        description: First name of drawer
+      last_name:
+        type: string
+        description: Last name of drawer
+
+  InvoiceCompanyInvoiceContractorsStructure:
+    type: object
+    properties:
+      data:
+        type: array
+        description: CreateInvoice contractors data
+        items:
+          $ref: "#/definitions/CompanyInvoiceContractors"
+
+  CompanyInvoiceContractors:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: Contractor id
+      name:
+        type: string
+        description: Contractor name
+      vatin:
+        type: string
+        description: Vat number
+      email:
+        type: string
+        description: E-mail
+      phone:
+        type: string
+        description: Phone number
+      bank_name:
+        type: string
+        description: Bank name
+      bank_account_number:
+        type: string
+        description: Bank account number
+      main_address_street:
+        type: string
+        description: Main address street
+      main_address_number:
+        type: string
+        description: Main address number
+      main_address_zip_code:
+        type: string
+        description: Main address zip code
+      main_address_city:
+        type: string
+        description: Main address city
+      main_address_country:
+        type: string
+        description: Main address country
+      contact_address_street:
+        type: string
+        description: Contact address street
+      contact_address_number:
+        type: string
+        description: Contact address number
+      contact_address_zip_code:
+        type: string
+        description: Contact address zip code
+      contact_address_city:
+        type: string
+        description: Contact address city
+      contact_address_country:
+        type: string
+        description: Contact address country
+      default_payment_term_days:
+        type: number
+        format: int
+        description: Default payment term in days (for example on invoices)
+      vatin_prefix:
+          $ref: "#/definitions/VatinPrefix"
+
+  VatinPrefix:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Prefix id
+      name:
+        type: string
+        description: Prefix name
+      key:
+        type: integer
+        description: Prefix key
+      created_at:
+        type: string
+        description: Date of registry creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last registry update in `Y-m-d H:i:s` format
+
+  PaymentMethod:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: Payment Id
+          slug:
+            type: string
+            description: Payment slug
+          name:
+            type: string
+            description: Payment name
+          invoice_restrict:
+            type: integer
+            description: If payment is invoice restricted
+          created_at:
+            type: string
+            description: Date of payment creation in `Y-m-d H:i:s` format
+          updated_at:
+            type: string
+            description: Date of last payment update in `Y-m-d H:i:s` format

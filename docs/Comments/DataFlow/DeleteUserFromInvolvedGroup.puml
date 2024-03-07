@@ -1,0 +1,12 @@
+@startuml
+title Delete user to group 'Involved' to Task/Document \n
+
+start
+
+:Delete User from Task/Document ;
+:Add_new_notification ;
+note: You have been deleted from 'Document/Task'
+
+stop
+
+@enduml

@@ -1,0 +1,99 @@
+swagger: '2.0'
+info:
+  title: CreateInvoice types
+  description: Display available invoice types
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /invoice-types:
+    get:
+      summary: Display list of invoice types
+      description: |
+        Displays list of available invoice types.
+      tags:
+        - CreateInvoice type
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which users are displayed
+          required: true
+          type: integer
+        - name: register
+          in: query
+          description: Passing data will get only types that can be displayed in register. Accepts
+            only one value `1`
+          required: false
+          type: integer
+      responses:
+        200:
+          description: CreateInvoice types list
+          schema:
+              $ref: "#/definitions/SuccessInvoiceTypesIndexResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+              $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  SuccessInvoiceTypesIndexResponse:
+    type: object
+
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InvoiceType"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  InvoiceType:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int
+        description: CreateInvoice type id
+      name:
+        type: string
+        description: CreateInvoice type slug
+      description:
+        type: string
+        description: CreateInvoice type description for Vat Payer
+      no_vat_description:
+        type: string
+        description: CreateInvoice type description for No Vat Payer
+      created_at:
+        type: string
+        description: Date of invoice type creation in `Y-m-d H:i:s` format
+      updated_at:
+        type: string
+        description: Date of last invoice type update in `Y-m-d H:i:s` format
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

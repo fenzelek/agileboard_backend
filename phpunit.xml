@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" backupGlobals="false" backupStaticAttributes="false" bootstrap="bootstrap/autoload.php" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" processIsolation="false" stopOnFailure="false" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">App/</directory>
+    </include>
+    <exclude>
+      <directory suffix=".php">App/Modules/*/Database/</directory>
+      <file>App/Http/routes.php</file>
+      <file>App/Modules/CalendarAvailability/Http/routes.php</file>
+      <file>App/Modules/CashFlow/Http/routes.php</file>
+      <file>App/Modules/Company/Http/routes.php</file>
+      <file>App/Modules/Contractor/Http/routes.php</file>
+      <file>App/Modules/Notification/Http/routes.php</file>
+      <file>App/Modules/Project/Http/routes.php</file>
+      <file>App/Modules/Sale/Http/routes.php</file>
+      <file>App/Modules/SaleInvoice/Http/routes.php</file>
+      <file>App/Modules/SaleOther/Http/routes.php</file>
+      <file>App/Modules/SaleReport/Http/routes.php</file>
+      <file>App/Modules/User/Http/routes.php</file>
+      <file>App/Modules/Integration/Http/routes.php</file>
+      <file>App/Modules/Project/Http/routes.php</file>
+      <file>App/Modules/Agile/Http/routes.php</file>
+      <file>App/Modules/Knowledge/Http/routes.php</file>
+    </exclude>
+  </coverage>
+  <testsuites>
+    <testsuite name="Application Test Suite">
+      <directory>./tests/</directory>
+    </testsuite>
+    <testsuite name="Integration">
+      <directory>./tests/Unit/App/Modules/Integration</directory>
+      <directory>./tests/Feature/App/Modules/Integration</directory>
+      <file>./tests/Feature/App/Console/Commands/TrackTimeTest.php</file>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="APP_ENV" value="testing"/>
+    <env name="APP_DEBUG" value="false"/>
+    <env name="CACHE_DRIVER" value="array"/>
+    <env name="SESSION_DRIVER" value="array"/>
+    <env name="QUEUE_DRIVER" value="sync"/>
+    <env name="BROADCAST_DRIVER" value="log"/>
+    <env name="DB_CONNECTION" value="mysql_testing"/>
+    <env name="SQL_LOG_QUERIES" value="false"/>
+    <env name="SQL_LOG_SLOW_QUERIES" value="false"/>
+    <env name="APP_WELCOME_ABSOLUTE_URL" value="http://test.pl"/>
+    <env name="PAYU_POS_ID" value=""/>
+    <env name="PAYU_MD5" value=""/>
+    <env name="PAYU_CLIENT_ID" value=""/>
+    <env name="PAYU_CLIENT_SECRED" value=""/>
+    <env name="PACKAGE_PORTAL_NAME" value="fv"/>
+  </php>
+</phpunit>

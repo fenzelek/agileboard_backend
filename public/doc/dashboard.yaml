@@ -1,0 +1,181 @@
+swagger: '2.0'
+info:
+  title: Dashboard
+  description: This section allow you to manage projects in your company.
+  version: "1.0.0"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# will be prefixed to all paths
+basePath: /
+paths:
+  /dashboard:
+    get:
+      summary: Display list of widgets
+      description: |
+        Display list of widgets for selected company and logged user
+      tags:
+        - Dashboard
+      parameters:
+        - name: selected_company_id
+          in: query
+          description: Id of company for which widgets will be listed
+          type: string
+          required: true
+      responses:
+        200:
+          description: List of widgets
+          schema:
+            $ref: "#/definitions/WidgetsListResponse"
+        422:
+          description: Validation error. As code you will get `general.validation_failed`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: User has no access to display this page. As code you will get `general.no_action_permission`
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  WidgetsListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/Widgets"
+      exec_time:
+        type: number
+        format: float
+        description: API execution time
+
+  Widgets:
+    properties:
+      YourProjects:
+        type: array
+        items:
+          $ref: "#/definitions/YourProjects"
+      YourTasks:
+        type: array
+        items:
+          $ref: "#/definitions/YourTasks"
+      LastAdded:
+        type: array
+        items:
+          $ref: "#/definitions/LastAdded"
+
+  LastAdded:
+    type: object
+    description: Project details
+    properties:
+      id:
+        type: number
+        format: int
+        description: Task id
+      title:
+        type: string
+        description: Task title
+      name:
+        type: string
+        description: Task name
+      type_id:
+        type: number
+        format: int
+        description: Type id
+      type_name:
+        type: string
+        description: Type name
+      created_at:
+        type: string
+        description: Task creation time
+      stories:
+        type: array
+        items:
+          $ref: "#/definitions/Story"
+
+  Story:
+    type: object
+    description: Story details
+    properties:
+      name:
+        type: string
+        description: Story name
+      color:
+        type: string
+        description: Story color
+
+  YourTasks:
+    type: object
+    description: Project details
+    properties:
+      id:
+        type: number
+        format: int
+        description: Task id
+      title:
+        type: string
+        description: Task title
+      name:
+        type: string
+        description: Task name
+      status_id:
+        type: number
+        format: int
+        description: Status id
+      sprint_id:
+        type: number
+        format: int
+        description: Sprint id
+      project_id:
+        type: number
+        format: int
+        description: project id
+      stories:
+        type: array
+        items:
+          $ref: "#/definitions/Story"
+
+  YourProjects:
+    type: object
+    description: Project details
+    properties:
+      id:
+        type: number
+        format: int
+        description: Project id
+      company_id:
+        type: number
+        format: int
+        description: Company id
+      name:
+        type: string
+        description: Project name
+      short_name:
+        type: string
+        description: Project short name
+      color:
+        type: string
+        description: Class name for bg and font color
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error code.
+      fields:
+        type: array
+        description: Error messages for each field. As keys you will get field names and as values you will get error messages for those fields
+        items:
+          type: string
+      exec_time:
+        type: number
+        format: float
+        description: API execution time

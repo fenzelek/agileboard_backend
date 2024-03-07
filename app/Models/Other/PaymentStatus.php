@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models\Other;
+
+class PaymentStatus
+{
+    const STATUS_BEFORE_START = 'BEFORE_START';
+    const STATUS_NEW = 'NEW';
+    const STATUS_PENDING = 'PENDING';
+    const STATUS_WAITING_FOR_CONFIRMATION = 'WAITING_FOR_CONFIRMATION';
+    const STATUS_COMPLETED = 'COMPLETED';
+    const STATUS_CANCELED = 'CANCELED';
+    const STATUS_REJECTED = 'REJECTED';
+    const STATUS_COMPLETED_BUT_NOT_USED = 'COMPLETED_BUT_NOT_USED';
+
+    const WAITING_STATUSES = [
+        self::STATUS_NEW,
+        self::STATUS_PENDING,
+        self::STATUS_WAITING_FOR_CONFIRMATION,
+        self::STATUS_REJECTED,
+    ];
+}
